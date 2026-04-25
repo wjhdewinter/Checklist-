@@ -1,0 +1,718 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>AWC Warehouse Tools FULL PRO</title>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/signature_pad@4.0.0/dist/signature_pad.umd.min.js"></script>
+
+<style>
+:root{
+  --bg:#0f172a;
+  --card:#1e293b;
+  --accent:#ff6a00;
+  --ok:#22c55e;
+  --bad:#ef4444;
+  --urgent:#f97316;
+  --muted:#94a3b8;
+}
+*{box-sizing:border-box}
+body{
+  margin:0;
+  padding:12px;
+  padding-bottom:135px;
+  font-family:Arial,Helvetica,sans-serif;
+  background:linear-gradient(180deg,#020617,#0f172a 45%,#111827);
+  color:white;
+}
+.container{max-width:760px;margin:auto}
+.brand-card{
+  background:linear-gradient(135deg,#111827,#0f172a);
+  border:1px solid #334155;
+  border-radius:18px;
+  padding:18px;
+  margin-bottom:12px;
+  text-align:center;
+}
+.brand-logo{
+  width:220px;
+  max-width:90%;
+  display:block;
+  margin:0 auto 12px;
+  background:white;
+  border-radius:12px;
+  padding:10px;
+}
+h1{font-size:1.35rem;margin:0;color:white}
+.subtitle{color:#cbd5e1;margin:8px 0 0;font-size:.9rem}
+.card{
+  background:var(--card);
+  border:1px solid #334155;
+  border-radius:14px;
+  padding:15px;
+  margin-bottom:12px;
+}
+label{display:block;margin-top:10px;font-weight:bold}
+input,select,textarea{
+  width:100%;
+  padding:12px;
+  margin-top:6px;
+  border-radius:8px;
+  border:1px solid #334155;
+  background:#0f172a;
+  color:white;
+  font-size:1rem;
+}
+textarea{min-height:74px;resize:vertical}
+.module-tabs{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:8px;
+  margin-top:10px;
+}
+.tab{
+  background:#334155;
+  color:white;
+  padding:12px;
+  border-radius:10px;
+  border:0;
+  font-weight:bold;
+}
+.tab.active{
+  background:linear-gradient(135deg,#ff6a00,#b91c1c);
+}
+.check{
+  background:rgba(0,0,0,.24);
+  border-left:6px solid var(--ok);
+  border-radius:10px;
+  padding:12px;
+}
+.check.fail{border-left-color:var(--bad)}
+.check.urgent{border-left-color:var(--urgent);box-shadow:0 0 0 1px rgba(249,115,22,.45)}
+.row{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:12px;
+}
+.checkbox{
+  width:36px;
+  height:36px;
+  accent-color:var(--ok);
+  flex-shrink:0;
+}
+.failbox{
+  display:none;
+  margin-top:12px;
+  border-top:1px solid #475569;
+  padding-top:10px;
+}
+.fail .failbox{display:block}
+small{color:var(--muted)}
+.preview{
+  display:none;
+  max-width:100%;
+  margin-top:8px;
+  border-radius:8px;
+  border:1px solid #475569;
+}
+#signature{
+  width:100%;
+  height:160px;
+  background:white;
+  border-radius:8px;
+  display:block;
+}
+.alert-box{
+  display:none;
+  background:#7f1d1d;
+  border:1px solid #f97316;
+  color:#fff7ed;
+  border-radius:12px;
+  padding:12px;
+  margin-bottom:12px;
+  font-weight:bold;
+}
+.footer{
+  position:fixed;
+  left:0;
+  right:0;
+  bottom:0;
+  background:#020617;
+  border-top:2px solid var(--accent);
+  padding:12px;
+  z-index:9999;
+}
+button{
+  width:100%;
+  border:0;
+  border-radius:10px;
+  padding:15px;
+  font-size:1rem;
+  font-weight:bold;
+  color:white;
+}
+button:disabled{opacity:.55}
+.btn-main{background:linear-gradient(135deg,#ff6a00,#b91c1c)}
+.btn-clear{background:#475569;margin-top:8px;padding:10px}
+#pdf-section{
+  display:none;
+  margin-top:15px;
+}
+.notice{
+  background:#fef3c7;
+  color:#78350f;
+  border-radius:8px;
+  padding:10px;
+  margin-bottom:10px;
+}
+#pdf{
+  background:white;
+  color:black;
+  width:794px;
+  min-height:1123px;
+  padding:25px;
+  font-family:Arial,Helvetica,sans-serif;
+}
+.pdf-brand{
+  display:flex;
+  align-items:center;
+  gap:18px;
+  border-bottom:4px solid #ff6a00;
+  padding-bottom:12px;
+  margin-bottom:14px;
+}
+.pdf-logo-img{
+  width:180px;
+  background:white;
+  object-fit:contain;
+}
+.pdf-title h2{margin:0;font-size:22px}
+.pdf-title p{margin:4px 0 0;font-size:12px;color:#334155}
+.pdf-table{
+  width:100%;
+  border-collapse:collapse;
+  margin-top:15px;
+}
+.pdf-table th,.pdf-table td{
+  border:1px solid #111;
+  padding:7px;
+  font-size:10px;
+  vertical-align:top;
+}
+.pdf-table th{background:#e5e7eb}
+.pdf-photo{max-width:130px;max-height:100px}
+.pdf-ok{color:green;font-weight:bold}
+.pdf-bad{color:red;font-weight:bold}
+.pdf-urgent{color:#ea580c;font-weight:bold}
+.pdf-urgent-block{
+  display:none;
+  background:#ffedd5;
+  border:2px solid #f97316;
+  padding:10px;
+  margin:12px 0;
+  font-size:12px;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+  <div class="brand-card">
+    <img class="brand-logo" src="logo.png" alt="Amsterdam Warehouse Co logo">
+    <h1>AWC Warehouse Tools FULL PRO</h1>
+    <p class="subtitle">Dagelijkse checklist · Retouren · BHV · Teamleider inspectie</p>
+  </div>
+
+  <div id="urgentAlert" class="alert-box">
+    🚨 SPOED gedetecteerd. De mail krijgt automatisch SPOED in het onderwerp.
+  </div>
+
+  <div class="card">
+    <label>Kies module</label>
+    <div class="module-tabs">
+      <button class="tab active" id="tab-daily" onclick="setModule('daily')">Dagelijkse checklist</button>
+      <button class="tab" id="tab-return" onclick="setModule('return')">Retouren</button>
+      <button class="tab" id="tab-bhv" onclick="setModule('bhv')">BHV</button>
+      <button class="tab" id="tab-leader" onclick="setModule('leader')">Teamleider</button>
+    </div>
+
+    <label>Naam</label>
+    <input id="name" placeholder="Naam inspecteur / medewerker">
+
+    <label>Locatie / afdeling</label>
+    <input id="location" placeholder="Bijv. Hal A, Expeditie, Entresol">
+
+    <div id="returnFields" style="display:none;">
+      <label>Klant / referentie</label>
+      <input id="customer" placeholder="Klantnaam of referentie">
+
+      <label>Ordernummer / retournummer</label>
+      <input id="order" placeholder="Ordernummer of retournummer">
+    </div>
+
+    <small id="moduleHelp">Vinkje aan = OK. Vinkje uit = actiepunt met foto/details.</small>
+  </div>
+
+  <div id="list"></div>
+
+  <div class="card">
+    <label style="color:var(--accent)">Algemene opmerkingen</label>
+    <textarea id="generalNotes" placeholder="Extra opmerkingen voor het rapport..."></textarea>
+  </div>
+
+  <div class="card">
+    <label style="color:var(--accent)">Handtekening</label>
+    <canvas id="signature"></canvas>
+    <button class="btn-clear" onclick="clearSig()">Wis handtekening</button>
+  </div>
+
+  <div id="pdf-section">
+    <div class="notice">PDF-preview zichtbaar. De PDF wordt daarna gedownload en de e-mail wordt geopend.</div>
+
+    <div id="pdf">
+      <div class="pdf-brand">
+        <img class="pdf-logo-img" src="logo.png" alt="Amsterdam Warehouse Co logo">
+        <div class="pdf-title">
+          <h2 id="pdf-main-title">Warehouse Rapportage</h2>
+          <p>Amsterdam Warehouse Co · The place to go</p>
+        </div>
+      </div>
+
+      <div id="p-urgent-block" class="pdf-urgent-block">
+        🚨 SPOEDMELDING: In deze rapportage staat minimaal één actiepunt met prioriteit SPOED.
+      </div>
+
+      <p><b>Module:</b> <span id="p-module"></span></p>
+      <p><b>Naam:</b> <span id="p-name"></span></p>
+      <p><b>Locatie:</b> <span id="p-location"></span></p>
+      <p id="p-customer-line" style="display:none;"><b>Klant / referentie:</b> <span id="p-customer"></span></p>
+      <p id="p-order-line" style="display:none;"><b>Order / retournummer:</b> <span id="p-order"></span></p>
+      <p><b>Datum:</b> <span id="p-date"></span></p>
+
+      <table class="pdf-table">
+        <thead>
+          <tr>
+            <th>Controlepunt</th>
+            <th>Status</th>
+            <th>Afwijking / details</th>
+            <th>Prio</th>
+            <th>Foto</th>
+          </tr>
+        </thead>
+        <tbody id="p-body"></tbody>
+      </table>
+
+      <div style="margin-top:16px;">
+        <p><b>Algemene opmerkingen:</b></p>
+        <p id="p-general"></p>
+      </div>
+
+      <div style="margin-top:30px;text-align:right;">
+        <p><b>Handtekening:</b></p>
+        <img id="p-sign" style="width:180px;border-bottom:1px solid #000;">
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div class="footer">
+  <button class="btn-main" id="mainBtn" onclick="makePDF()">📄 PDF MAKEN + MAIL OPENEN</button>
+</div>
+
+<script>
+const MAIL_TO = "willem@amsterdamwarehouse.com";
+
+const moduleData = {
+  daily: {
+    title: "Dagelijkse magazijn checklist",
+    pdfTitle: "Dagelijkse Magazijn Checklist",
+    help: "Controle voor opening/sluiting: netheid, veiligheid, docks, looppaden en blokkades.",
+    items: ["Looppaden vrij", "Docks schoon en veilig", "Nooduitgangen vrij", "Afval verwijderd", "Pallets correct gestapeld", "Vloer schoon en droog", "Verlichting in orde", "Geen schade aan stellingen", "Buitenterrein veilig", "Expeditie klaar voor gebruik"],
+    issues: ["Rommel / obstakel", "Blokkade", "Vuil / afval", "Schade", "Onveilige situatie", "Lekkage", "Overig"]
+  },
+  return: {
+    title: "Retour aanmelden",
+    pdfTitle: "Retour Rapportage",
+    help: "Registreer retouren met klantgegevens, reden, foto’s en status.",
+    items: ["Retour ontvangen", "Verpakking gecontroleerd", "Product gecontroleerd", "Schade zichtbaar", "Aantal gecontroleerd", "Label / ordernummer aanwezig", "Foto bewijs toegevoegd", "Retour klaar voor verwerking"],
+    issues: ["Beschadigd product", "Beschadigde verpakking", "Aantal klopt niet", "Verkeerd artikel", "Geen label", "Klantclaim", "Overig"]
+  },
+  bhv: {
+    title: "BHV inspectie",
+    pdfTitle: "BHV Veiligheidsinspectie",
+    help: "Controleer nooduitgangen, vluchtwegen, brandblussers, EHBO en evacuatiepunten.",
+    items: ["Nooduitgangen vrij", "Vluchtwegen vrij", "Brandblussers bereikbaar", "EHBO materiaal aanwezig", "Evacuatie verzamelplaats vrij", "Noodverlichting zichtbaar", "Brandmelders vrij", "Aanwezigenregistratie mogelijk"],
+    issues: ["Geblokkeerd", "Niet bereikbaar", "Ontbreekt", "Defect", "Niet zichtbaar", "Onveilige situatie", "Overig"]
+  },
+  leader: {
+    title: "Teamleider inspectie",
+    pdfTitle: "Teamleider Werkplekinspectie",
+    help: "Inspectie per team/afdeling: werkplek, veiligheid, productiviteit en verbeterpunten.",
+    items: ["Werkplek netjes", "Team werkt veilig", "Productiviteit op orde", "Instructies duidelijk", "Materialen aanwezig", "Knelpunten gemeld", "Afwijkingen opgevolgd", "Communicatie op orde"],
+    issues: ["Onveilig gedrag", "Werkplek rommelig", "Materiaal ontbreekt", "Procesvertraging", "Instructie onduidelijk", "Kwaliteitsissue", "Overig"]
+  }
+};
+
+let currentModule = "daily";
+let sigPad;
+
+function makeId(text){
+  return text.replace(/\s+/g,"_").replace(/[^a-zA-Z0-9_]/g,"");
+}
+
+function setModule(moduleKey){
+  currentModule = moduleKey;
+
+  document.querySelectorAll(".tab").forEach(t=>t.classList.remove("active"));
+  document.getElementById("tab-" + moduleKey).classList.add("active");
+
+  document.getElementById("returnFields").style.display = moduleKey === "return" ? "block" : "none";
+  document.getElementById("moduleHelp").innerText = moduleData[moduleKey].help;
+
+  renderList();
+  updateUrgentState();
+}
+
+function renderList(){
+  const list = document.getElementById("list");
+  list.innerHTML = "";
+
+  const data = moduleData[currentModule];
+
+  data.items.forEach(item=>{
+    const id = makeId(item);
+    const options = data.issues.map(i=>`<option>${i}</option>`).join("");
+
+    list.insertAdjacentHTML("beforeend", `
+      <div class="card">
+        <div class="check" id="card_${id}">
+          <div class="row">
+            <div>
+              <b>${item}</b><br>
+              <small>Aan = OK / Uit = actiepunt</small>
+            </div>
+            <input class="checkbox" type="checkbox" checked onchange="toggleFail('${id}', this.checked)">
+          </div>
+
+          <div class="failbox">
+            <label>Afwijking / reden</label>
+            <select id="issue_${id}">${options}</select>
+
+            <label>Details</label>
+            <textarea id="detail_${id}" placeholder="Omschrijf details, locatie of actie..."></textarea>
+
+            <label>Prioriteit</label>
+            <select id="prio_${id}" onchange="updateUrgentState()">
+              <option>LAAG</option>
+              <option>MEDIUM</option>
+              <option>SPOED</option>
+            </select>
+
+            <label>Foto</label>
+            <input type="file" accept="image/*" id="photo_${id}" onchange="previewPhoto('${id}')">
+            <img class="preview" id="preview_${id}">
+          </div>
+        </div>
+      </div>
+    `);
+  });
+}
+
+function init(){
+  renderList();
+  initSignature();
+}
+
+function initSignature(){
+  const canvas = document.getElementById("signature");
+  sigPad = new SignaturePad(canvas,{backgroundColor:"white"});
+  resizeSignature();
+}
+
+function resizeSignature(){
+  const canvas = document.getElementById("signature");
+  const ratio = Math.max(window.devicePixelRatio || 1, 1);
+  const data = sigPad && !sigPad.isEmpty() ? sigPad.toData() : null;
+
+  canvas.width = canvas.offsetWidth * ratio;
+  canvas.height = canvas.offsetHeight * ratio;
+  canvas.getContext("2d").scale(ratio, ratio);
+
+  if(sigPad){
+    sigPad.clear();
+    if(data) sigPad.fromData(data);
+  }
+}
+
+function clearSig(){
+  if(sigPad) sigPad.clear();
+}
+
+function toggleFail(id, checked){
+  document.getElementById("card_" + id).classList.toggle("fail", !checked);
+  updateUrgentState();
+}
+
+function updateUrgentState(){
+  let hasUrgent = false;
+
+  moduleData[currentModule].items.forEach(item=>{
+    const id = makeId(item);
+    const card = document.getElementById("card_" + id);
+    if(!card) return;
+
+    const fail = card.classList.contains("fail");
+    const prio = document.getElementById("prio_" + id).value;
+    const urgent = fail && prio === "SPOED";
+
+    card.classList.toggle("urgent", urgent);
+    if(urgent) hasUrgent = true;
+  });
+
+  document.getElementById("urgentAlert").style.display = hasUrgent ? "block" : "none";
+}
+
+function previewPhoto(id){
+  const input = document.getElementById("photo_" + id);
+  const img = document.getElementById("preview_" + id);
+
+  if(!input.files || !input.files[0]){
+    img.style.display = "none";
+    img.src = "";
+    return;
+  }
+
+  const reader = new FileReader();
+  reader.onload = e=>{
+    img.src = e.target.result;
+    img.style.display = "block";
+  };
+  reader.readAsDataURL(input.files[0]);
+}
+
+function photoToData(file){
+  return new Promise(resolve=>{
+    if(!file) return resolve("");
+
+    const reader = new FileReader();
+    reader.onload = e=>{
+      const img = new Image();
+      img.onload = ()=>{
+        const canvas = document.createElement("canvas");
+        const max = 600;
+        const scale = Math.min(max / img.width, 1);
+        canvas.width = img.width * scale;
+        canvas.height = img.height * scale;
+        canvas.getContext("2d").drawImage(img,0,0,canvas.width,canvas.height);
+        resolve(canvas.toDataURL("image/jpeg",0.75));
+      };
+      img.onerror = ()=>resolve("");
+      img.src = e.target.result;
+    };
+    reader.onerror = ()=>resolve("");
+    reader.readAsDataURL(file);
+  });
+}
+
+function escapeHtml(str){
+  return String(str).replace(/[&<>"']/g, m => ({
+    "&":"&amp;",
+    "<":"&lt;",
+    ">":"&gt;",
+    '"':"&quot;",
+    "'":"&#039;"
+  })[m]);
+}
+
+function getUrgentItems(){
+  const urgent = [];
+
+  moduleData[currentModule].items.forEach(item=>{
+    const id = makeId(item);
+    const card = document.getElementById("card_" + id);
+    const fail = card.classList.contains("fail");
+    const prio = document.getElementById("prio_" + id).value;
+
+    if(fail && prio === "SPOED"){
+      urgent.push({
+        item,
+        issue: document.getElementById("issue_" + id).value,
+        detail: document.getElementById("detail_" + id).value
+      });
+    }
+  });
+
+  return urgent;
+}
+
+async function makePDF(){
+  const name = document.getElementById("name").value.trim();
+  const location = document.getElementById("location").value.trim() || "Amsterdam Warehouse Company";
+  const customer = document.getElementById("customer").value.trim();
+  const order = document.getElementById("order").value.trim();
+  const general = document.getElementById("generalNotes").value.trim();
+  const btn = document.getElementById("mainBtn");
+  const data = moduleData[currentModule];
+
+  if(!name){
+    alert("Vul eerst een naam in.");
+    return;
+  }
+
+  if(!sigPad || sigPad.isEmpty()){
+    alert("Handtekening is verplicht.");
+    return;
+  }
+
+  btn.disabled = true;
+  btn.innerText = "⏳ PDF wordt gemaakt...";
+
+  try{
+    const urgentItems = getUrgentItems();
+
+    document.getElementById("pdf-main-title").innerText = data.pdfTitle;
+    document.getElementById("p-module").innerText = data.title;
+    document.getElementById("p-name").innerText = name;
+    document.getElementById("p-location").innerText = location;
+    document.getElementById("p-date").innerText = new Date().toLocaleString("nl-NL");
+    document.getElementById("p-sign").src = sigPad.toDataURL("image/png");
+    document.getElementById("p-general").innerText = general || "-";
+    document.getElementById("p-urgent-block").style.display = urgentItems.length ? "block" : "none";
+
+    document.getElementById("p-customer-line").style.display = currentModule === "return" ? "block" : "none";
+    document.getElementById("p-order-line").style.display = currentModule === "return" ? "block" : "none";
+    document.getElementById("p-customer").innerText = customer || "-";
+    document.getElementById("p-order").innerText = order || "-";
+
+    const tbody = document.getElementById("p-body");
+    tbody.innerHTML = "";
+
+    for(const item of data.items){
+      const id = makeId(item);
+      const fail = document.getElementById("card_" + id).classList.contains("fail");
+      const file = document.getElementById("photo_" + id).files[0];
+
+      let photo = "-";
+      if(fail && file){
+        const photoData = await photoToData(file);
+        if(photoData) photo = `<img class="pdf-photo" src="${photoData}">`;
+      }
+
+      const issue = fail ? document.getElementById("issue_" + id).value : "In orde";
+      const detail = fail ? document.getElementById("detail_" + id).value : "";
+      const prio = fail ? document.getElementById("prio_" + id).value : "-";
+      const prioClass = prio === "SPOED" ? "pdf-urgent" : "";
+
+      tbody.insertAdjacentHTML("beforeend", `
+        <tr>
+          <td><b>${escapeHtml(item)}</b></td>
+          <td class="${fail ? "pdf-bad" : "pdf-ok"}">${fail ? "ACTIE" : "OK"}</td>
+          <td>${escapeHtml(issue)}<br><small>${escapeHtml(detail)}</small></td>
+          <td class="${prioClass}">${escapeHtml(prio)}</td>
+          <td>${photo}</td>
+        </tr>
+      `);
+    }
+
+    const pdfSection = document.getElementById("pdf-section");
+    const pdfElement = document.getElementById("pdf");
+
+    pdfSection.style.display = "block";
+    pdfSection.scrollIntoView({behavior:"smooth", block:"start"});
+
+    await new Promise(resolve=>setTimeout(resolve,900));
+
+    const cleanName = name.replace(/\s+/g,"_").replace(/[^a-zA-Z0-9_-]/g,"");
+    const cleanModule = data.title.replace(/\s+/g,"_").replace(/[^a-zA-Z0-9_-]/g,"");
+    const cleanDate = new Date().toLocaleDateString("nl-NL").replaceAll("-","_").replaceAll("/","_");
+    const filename = `AWC_${cleanModule}_${cleanName}_${cleanDate}.pdf`;
+
+    const opt = {
+      margin:8,
+      filename:filename,
+      image:{type:"jpeg", quality:0.98},
+      html2canvas:{
+        scale:2,
+        useCORS:true,
+        allowTaint:true,
+        backgroundColor:"#ffffff",
+        scrollX:0,
+        scrollY:0,
+        windowWidth:794
+      },
+      jsPDF:{unit:"mm", format:"a4", orientation:"portrait"},
+      pagebreak:{mode:["css","legacy"]}
+    };
+
+    const blob = await html2pdf()
+      .from(pdfElement)
+      .set(opt)
+      .outputPdf("blob");
+
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+
+    window.open(url, "_blank");
+
+    const urgentText = urgentItems.length
+      ? "SPOED ACTIEPUNTEN:\\n" + urgentItems.map(i=>`- ${i.item}: ${i.issue}${i.detail ? " (" + i.detail + ")" : ""}`).join("\\n") + "\\n\\n"
+      : "";
+
+    const subjectPrefix = urgentItems.length ? "SPOED - " : "";
+    const subject = encodeURIComponent(`${subjectPrefix}AWC ${data.title} - ${name} - ${new Date().toLocaleDateString("nl-NL")}`);
+    const body = encodeURIComponent(
+`Hallo,
+
+${urgentText}De PDF is geopend/gedownload op dit toestel.
+Voeg deze PDF toe als bijlage.
+
+Module:
+${data.title}
+
+Bestandsnaam:
+${filename}
+
+Naam:
+${name}
+
+Locatie:
+${location}
+
+${currentModule === "return" ? "Klant / referentie:\\n" + (customer || "-") + "\\n\\nOrder / retournummer:\\n" + (order || "-") + "\\n\\n" : ""}Groet,
+${name}`
+    );
+
+    setTimeout(()=>{
+      window.location.href = `mailto:${MAIL_TO}?subject=${subject}&body=${body}`;
+    },1200);
+
+    alert(urgentItems.length
+      ? "SPOED gedetecteerd. PDF is gemaakt en de mail wordt als SPOED klaargezet."
+      : "PDF is gemaakt. De mail wordt geopend. Voeg de PDF toe als bijlage."
+    );
+
+  }catch(err){
+    alert("Fout bij maken PDF: " + err.message);
+  }finally{
+    btn.disabled = false;
+    btn.innerText = "📄 PDF MAKEN + MAIL OPENEN";
+  }
+}
+
+window.addEventListener("load", init);
+window.addEventListener("resize", resizeSignature);
+</script>
+
+</body>
+</html>
