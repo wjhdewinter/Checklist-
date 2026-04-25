@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AWC Warehouse Tools PRO</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<style>
+body{font-family:Arial;background:#0f172a;color:white;padding:10px}
+.card{background:#1e293b;padding:15px;border-radius:10px;margin-bottom:10px}
+button{width:100%;padding:15px;border:none;border-radius:8px;background:#ff6a00;color:white;font-weight:bold}
+input,select,textarea{width:100%;padding:10px;margin-top:5px;border-radius:5px;border:none}
+#pdf{background:white;color:black;padding:20px;margin-top:20px}
+</style>
+</head>
+<body>
+
+<div class="card">
+<img src="logo.png" style="width:180px;display:block;margin:auto;">
+<h2 style="text-align:center;">AWC Warehouse Tools</h2>
+</div>
+
+<div class="card">
+<select id="module">
+<option>Dagelijkse checklist</option>
+<option>Retouren</option>
+<option>BHV</option>
+<option>Teamleider</option>
+</select>
+<input id="name" placeholder="Naam">
+<textarea id="notes" placeholder="Opmerkingen"></textarea>
+</div>
+
+<button onclick="makePDF()">GENEREER PDF + MAIL</button>
+
+<div id="pdf">
+<img src="logo.png" style="width:120px;">
+<h2>AWC RAPPORT</h2>
+<p id="p-module"></p>
+<p id="p-name"></p>
+<p id="p-notes"></p>
+</div>
+
+<script>
+async function makePDF(){
+let module=document.getElementById("module").value;
+let name=document.getElementById("name").value;
+let notes=document.getElementById("notes").value;
+
+document.getElementById("p-module").innerText="Module: "+module;
+document.getElementById("p-name").innerText="Naam: "+name;
+document.getElementById("p-notes").innerText="Opmerkingen: "+notes;
+
+const element=document.getElementById("pdf");
+
+await html2pdf().from(element).save();
+
+window.location.href="mailto:willem@amsterdamwarehouse.com";
+}
+</script>
+
+</body>
+</html>
