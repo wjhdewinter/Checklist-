@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>AWC - Smart Inspector</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.0.0/dist/signature_pad.umd.min.js"></script>
+    <style>
+        :root { --bg: #0f172a; --card: #1e293b; --accent: #38bdf8; --success: #22c55e; --danger: #ef4444; --text: #f8fafc; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 10px; padding-bottom: 180px; }
+        .container { max-width: 650px; margin: auto; }
+        
+        /* Voortgangsbalk */
+        .progress-container { position: sticky; top: 0; z-index: 1000; background: var(--bg); padding: 10px 0; }
+        .progress-bar { height: 8px; background: #334155; border-radius: 4px; overflow: hidden; }
+        #progress-fill { height: 100%; width: 0%; background: var(--success); transition: 0.3s; }
+
+        .zone-card { background: var(--card); border-radius: 12px; margin-bottom: 15px; border: 1px solid #334155; padding: 15px; position: relative; }
+        .timestamp { position: absolute; top: 15px; right: 15px; font-size: 0.65rem; color: #64748b; }
+        
+        h1 { color: var(--accent); text-align: center; font-size: 1.2rem; text-transform: uppercase; margin-bottom: 15px; }
+        
+        .check-item { background: rgba(255,255,255,0.03); padding: 12px; border-radius: 8px; margin-bottom: 10px; }
+        .check-row { display: flex; align-items: center; justify-content: space-between; }
+        
+        /* Actie-styling */
+        .action-box { display: none; margin-top: 10px; border-top: 1px solid #334155; padding-top: 10px; }
+        input[type="checkbox"]:not(:checked) ~ .action-box { display: block; }
+        
+        input[type="text"], select { width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #334155; background: #0f172a; color: white; margin-top: 5px; box-sizing: border-box; }
+
+        .footer-actions { position: fixed; bottom: 0; left: 0; right: 0; background: rgba(15,23,42,0.95); padding: 15px; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; z-index: 100; border-top: 1px solid #334155; }
+        button { padding: 14px; border: none; border-radius: 8px; font-weight: bold; color: white; cursor: pointer; }
+        .btn-pdf { background: var(--danger); grid-column: span 2; font-size: 1.1rem; }
+
+        /* PDF STYLING */
+        #pdf-out { position: absolute; left: -9999px; background: white; color: black; width: 210mm; padding: 15mm; }
+        .critical-alert { background: #fef2f2; border: 2px solid #ef4444; padding: 10px; margin-bottom: 20px; }
+        .pdf-table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 9pt; }
+        .pdf-table th, .pdf-table td { border: 1px solid #ddd; padding: 6px; text-align: left; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="progress-container">
+        <div style="display:flex; justify-content:space-between; font-size:0.7rem; margin-bottom:5px;">
+            <span>Voortgang Inspectie</span>
+            <span id="progress-text">0%</span>
+        </div>
+        <div class="progress-bar"><div id="progress-fill"></div></div>
+    </div>
+
+    <h1>AWC Smart Audit</h1>
+
+    <div class="zone-card">
+        <label style="font-size:0.7rem; color:var(--accent);">INSPECTEUR:</label>
+        <input type="text" id="inspector-name" placeholder="Naam..." oninput="updateProgress()">
+        <button onclick="getLocation()" style="background:#475569; font-size:0.7rem; padding:5px; margin-top:5px; width:100%;">📍 Voeg GPS Locatie toe</button>
+        <div id="gps-display" style="font-size:0.6rem; margin-top:5px; color:#94a3b8;"></div>
+    </div>
+    
+    <div id="checklist-ui"></div>
+
+    <div class="zone-card">
+        <label style="color:var(--accent); font-weight:bold; font-size:0.8rem;">FINALE HANDTEKENING:</label>
+        <div style="background:white; border-radius:8px; margin: 10px 0;"><canvas id="sig-pad" style="width:100%; height:120px;"></canvas></div>
+        <button onclick="sig.clear()" style="background:#475569; width:100%; padding:5px; font-size:0.7rem;">Handtekening wissen</button>
+    </div>
+
+    <div class="footer-actions">
+        <button style="background:#25D366" onclick="verzend('wa')">WhatsApp</button>
+        <button style="background:#0078d4" onclick="verzend('mail')">E-mail</button>
+        <button class="btn-pdf" onclick="generateSmartPDF()">📄 MAAK SMART RAPPORT</button>
+    </div>
+</div>
+
+<div id="pdf-out">
+    <div style="display:flex; justify-content:space-between; border-bottom:3px solid #0f172a; padding-bottom:10px;">
+        <div>
+            <h1 style="margin:0; color:#0f172a; font-size:22pt;">Amsterdam Warehouse Company</h1>
+            <p style="margin:0; font-size:12pt; color:#64748b;">Smart Inspection Report</p>
+        </div>
+        <div style="text-align:right; font-size:9pt;">
+            <p><strong>Datum:</strong> <span id="pdf-date"></span></p>
+            <p><strong>Inspecteur:</strong> <span id="pdf-inspector"></span></p>
+            <p id="pdf-gps"></p>
+        </div>
+    </div>
+
+    <div id="pdf-critical" class="critical-alert" style="display:none;">
+        <h3 style="margin:0 0 5px 0; color:#b91c1c;">⚠️ KRITIEKE ACTIEPUNTEN (SPOED)</h3>
+        <ul id="pdf-critical-list" style="margin:0; padding-left:20px;"></ul>
+    </div>
+
+    <table class="pdf-table">
+        <thead><tr style="background:#f1f5f9;"><th>Zone</th><th>Check</th><th>Status</th><th>Opmerking</th></tr></thead>
+        <tbody id="pdf-tbody"></tbody>
+    </table>
+
+    <div style="margin-top:50px; text-align:right;">
+        <p><strong>Digitaal getekend door Willem:</strong></p>
+        <img id="pdf-sig-img" style="width:150px; border-bottom:1px solid #000;">
+    </div>
+</div>
+
+<script>
+    const questions = {
+        hal: ["Vloer vrij van folie/hout", "Gangpaden palletvrij", "Stellingen schadevrij", "Nooduitgangen vrij"],
+        exp: ["Docks vrij van rommel", "Heftrucks aan laders"],
+        wc: ["Hygiëne & Voorraad"]
+    };
+    const zones = [
+        { n: "Hal A", t: "hal" }, { n: "Hal B", t: "hal" }, { n: "Hal C", t: "hal" },
+        { n: "Expeditie", t: "exp" }, { n: "Toiletten", t: "wc" }
+    ];
+
+    let sig, gpsCoords = "";
+
+    function init() {
+        const list = document.getElementById('checklist-ui');
+        list.innerHTML = zones.map(z => `
+            <div class="zone-card" id="zone-${z.n}">
+                <div class="timestamp" id="time-${z.n}">Nog niet bezocht</div>
+                <strong style="color:var(--accent);">${z.n}</strong>
+                ${questions[z.t].map((q, i) => `
+                    <div class="check-item">
+                        <div class="check-row">
+                            <label>${q}</label>
+                            <input type="checkbox" checked id="q-${z.n}-${i}" onchange="markVisit('${z.n}'); updateProgress();">
+                        </div>
+                        <div class="action-box">
+                            <input type="text" id="loc-${z.n}-${i}" placeholder="Locatie/Details...">
+                            <select id="prio-${z.n}-${i}"><option value="LAAG">Laag</option><option value="MEDIUM">Medium</option><option value="SPOED">⚠️ SPOED</option></select>
+                            <input type="file" id="file-${z.n}-${i}" accept="image/*">
+                        </div>
+                    </div>`).join('')}
+            </div>`).join('');
+        sig = new SignaturePad(document.getElementById('sig-pad'));
+    }
+
+    function markVisit(z) {
+        const el = document.getElementById(`time-${z}`);
+        if(el.innerText === "Nog niet bezocht") {
+            el.innerText = "Bezocht: " + new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+        }
+    }
+
+    function updateProgress() {
+        const total = document.querySelectorAll('input[type="checkbox"]').length;
+        const checked = document.querySelectorAll('input[type="checkbox"]:checked').length;
+        const perc = Math.round((checked / total) * 100);
+        document.getElementById('progress-fill').style.width = perc + "%";
+        document.getElementById('progress-text').innerText = perc + "%";
+    }
+
+    function getLocation() {
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(pos => {
+                gpsCoords = `Lat: ${pos.coords.latitude.toFixed(4)}, Lon: ${pos.coords.longitude.toFixed(4)}`;
+                document.getElementById('gps-display').innerText = "📍 Locatie vastgelegd: " + gpsCoords;
+            });
+        }
+    }
+
+    function generateSmartPDF() {
+        const name = document.getElementById('inspector-name').value;
+        if(!name || sig.isEmpty()) { alert("Naam en handtekening verplicht!"); return; }
+
+        document.getElementById('pdf-inspector').innerText = name;
+        document.getElementById('pdf-date').innerText = new Date().toLocaleString();
+        document.getElementById('pdf-gps').innerText = gpsCoords;
+        
+        const tbody = document.getElementById('pdf-tbody');
+        const critList = document.getElementById('pdf-critical-list');
+        tbody.innerHTML = ""; critList.innerHTML = "";
+        let hasCrit = false;
+
+        zones.forEach(z => {
+            questions[z.t].forEach((q, i) => {
+                const ok = document.getElementById(`q-${z.n}-${i}`).checked;
+                const loc = document.getElementById(`loc-${z.n}-${i}`).value;
+                const prio = document.getElementById(`prio-${z.n}-${i}`).value;
+                const time = document.getElementById(`time-${z.n}`).innerText;
+
+                if(!ok && prio === 'SPOED') {
+                    hasCrit = true;
+                    critList.innerHTML += `<li><strong>${z.n}:</strong> ${q} (${loc})</li>`;
+                }
+
+                tbody.innerHTML += `<tr>
+                    <td>${i === 0 ? `<strong>${z.n}</strong><br><small>${time}</small>` : ""}</td>
+                    <td>${q}</td>
+                    <td style="color:${ok?'green':'red'}">${ok?'OK':'AFWIJKING'}</td>
+                    <td>${!ok ? `[${prio}] ${loc}` : '-'}</td>
+                </tr>`;
+            });
+        });
+
+        document.getElementById('pdf-critical').style.display = hasCrit ? 'block' : 'none';
+        document.getElementById('pdf-sig-img').src = sig.toDataURL();
+        
+        const el = document.getElementById('pdf-out');
+        html2pdf().from(el).set({ margin: 10, filename: `AWC_SMART_${name}.pdf`, html2canvas: { scale: 2 } }).save();
+    }
+
+    window.onload = init;
+</script>
+</body>
+</html>
