@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>AWC Professional - FINAL FIX</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.0.0/dist/signature_pad.umd.min.js"></script>
+    <style>
+        :root { --bg: #0f172a; --card: #1e293b; --accent: #38bdf8; --text: #f8fafc; }
+        body { font-family: sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 10px; padding-bottom: 220px; }
+        .container { max-width: 600px; margin: auto; }
+        .zone-card { background: var(--card); border-radius: 12px; margin-bottom: 12px; padding: 15px; border: 1px solid #334155; }
+        input[type="text"], select { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #334155; background: #0f172a; color: white; margin-top: 8px; box-sizing: border-box; }
+        .check-item { background: rgba(0,0,0,0.2); padding: 12px; border-radius: 8px; border-left: 5px solid #22c55e; }
+        .check-item.is-fail { border-left-color: #ef4444; }
+        .check-row { display: flex; align-items: center; justify-content: space-between; }
+        input[type="checkbox"] { width: 35px; height: 35px; }
+        .fail-ui { display: none; margin-top: 10px; }
+        .is-fail .fail-ui { display: block; }
+        .photo-preview { width: 100%; max-height: 150px; object-fit: cover; border-radius: 8px; margin-top: 10px; display: none; }
+        .sig-container { background: white; border-radius: 8px; margin-top: 10px; }
+        canvas { width: 100%; height: 150px; touch-action: none; border-radius: 8px; }
+        .footer { position: fixed; bottom: 0; left: 0; right: 0; background: #0f172a; padding: 15px; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; border-top: 2px solid var(--accent); z-index: 1000; }
+        button { padding: 18px; border: none; border-radius: 8px; font-weight: bold; color: white; cursor: pointer; }
+        
+        /* PDF EXPORT STIJL (Zichtbaar onderaan voor renderen) */
+        #pdf-export-area { background: white; color: black; padding: 20px; width: 790px; position: absolute; left: -9999px; }
+        .pdf-table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        .pdf-table th, .pdf-table td { border: 1px solid #000; padding: 8px; text-align: left; vertical-align: top; font-size: 10pt; color: black; }
+        .pdf-img { width: 100px; height: auto; border-radius: 4px; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="zone-card">
+        <h2 style="color:var(--accent); text-align:center;">AWC Audit V7</h2>
+        <input type="text" id="inspector" placeholder="Naam Inspecteur...">
+    </div>
+
+    <div id="audit-list"></div>
+
+    <div class="zone-card">
+        <label style="color:white; font-weight:bold;">HANDTEKENING:</label>
+        <div class="sig-container"><canvas id="sig-canvas"></canvas></div>
+        <button onclick="sig.clear()" style="background:#475569; width:100%; margin-top:5px; padding:5px;">Wis</button>
+    </div>
+
+    <div class="footer">
+        <button style="background:#25D366" onclick="whatsapp()">WhatsApp</button>
+        <button style="background:#0078d4" onclick="window.location.href='mailto:'">E-mail</button>
+        <button style="background:#ef4444; grid-column: span 2;" id="pdf-btn" onclick="generatePDF()">📄 DOWNLOAD RAPPORT (PDF)</button>
+    </div>
+</div>
+
+<div id="pdf-export-area">
+    <h1 style="text-align:center; border-bottom:2px solid #000;">AWC INSPECTIERAPPORT</h1>
+    <p><strong>Inspecteur:</strong> <span id="p-name"></span> | <strong>Datum:</strong> <span id="p-date"></span></p>
+    <table class="pdf-table">
+        <thead><tr style="background:#eee;"><th>Zone</th><th>Status</th><th>Bevinding</th><th>Foto</th></tr></thead>
+        <tbody id="p-body"></tbody>
+    </table>
+    <div style="margin-top:40px; text-align:right;">
+        <p>Handtekening:</p>
+        <img id="p-sig" style="width:150px; border-bottom:1px solid #000;">
+    </div>
+</div>
+
+<script>
+    const hallen = ["Hal A", "Hal B", "Hal C", "Hal D", "Hal E", "Hal F", "Hal G", "Hal H", "Entresol", "Expeditie", "Toiletten"];
+    const issues = ["Geen afwijking", "Folie/Hout op vloer", "Stellingschade", "Nooduitgang geblokkeerd", "Verlichting defect", "Overig..."];
+    let sig;
+
+    function setup() {
+        const list = document.getElementById('audit-list');
+        hallen.forEach(h => {
+            let opts = issues.map(i => `<option value="${i}">${i}</option>`).join('');
+            list.innerHTML += `
+            <div class="zone-card">
+                <div class="check-item" id="item-${h}">
+                    <div class="check-row"><strong>${h}</strong><input type="checkbox" checked onchange="toggle('${h}', this)"></div>
+                    <div class="fail-ui">
+                        <select id="sel-${h}">${opts}</select>
+                        <input type="text" id="txt-${h}" placeholder="Locatie/Details...">
+                        <input type="file" accept="image/*" onchange="previewImg(this, '${h}')" style="margin-top:10px;">
+                        <img id="prev-${h}" class="photo-preview">
+                    </div>
+                </div>
+            </div>`;
+        });
+        const canvas = document.getElementById('sig-canvas');
+        sig = new SignaturePad(canvas);
+        canvas.width = canvas.offsetWidth; canvas.height = canvas.offsetHeight;
+    }
+
+    function toggle(h, el) { document.getElementById(`item-${h}`).classList.toggle('is-fail', !el.checked); }
+
+    function previewImg(input, h) {
+        const file = input.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const img = document.getElementById(`prev-${h}`);
+                img.src = e.target.result;
+                img.style.display = 'block';
+            };
+            reader.readAsDataURL(file);
+        }
+    }
+
+    async function generatePDF() {
+        const n = document.getElementById('inspector').value;
+        if(!n || sig.isEmpty()) return alert("Vul naam en handtekening in!");
+        
+        const btn = document.getElementById('pdf-btn');
+        btn.innerText = "⏳ PDF OPBOUWEN...";
+        
+        document.getElementById('p-name').innerText = n;
+        document.getElementById('p-date').innerText = new Date().toLocaleString();
+        document.getElementById('p-sig').src = sig.toDataURL();
+        
+        const tbody = document.getElementById('p-body');
+        tbody.innerHTML = "";
+
+        for (const h of hallen) {
+            const isFail = document.getElementById(`item-${h}`).classList.contains('is-fail');
+            const imgData = document.getElementById(`prev-${h}`).src;
+            const photoCell = imgData ? `<img src="${imgData}" class="pdf-img">` : '-';
+
+            tbody.innerHTML += `<tr>
+                <td><b>${h}</b></td>
+                <td style="color:${isFail?'red':'green'}">${isFail?'AFWIJKING':'OK'}</td>
+                <td>${isFail ? document.getElementById(`sel-${h}`).value + " - " + document.getElementById(`txt-${h}`).value : 'In orde'}</td>
+                <td>${photoCell}</td>
+            </tr>`;
+        }
+
+        const element = document.getElementById('pdf-export-area');
+        element.style.left = "0px"; // Even in beeld voor renderen
+
+        const opt = {
+            margin: 5,
+            filename: `AWC_Audit_${n}.pdf`,
+            image: { type: 'jpeg', quality: 0.98 },
+            html2canvas: { scale: 2, useCORS: true, logging: false },
+            jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+        };
+
+        try {
+            await html2pdf().from(element).set(opt).save();
+            alert("Gereed!");
+        } catch(e) { alert("Fout: " + e); }
+        finally {
+            element.style.left = "-9999px";
+            btn.innerText = "📄 DOWNLOAD RAPPORT (PDF)";
+        }
+    }
+
+    function whatsapp() {
+        const n = document.getElementById('inspector').value || "Inspecteur";
+        let msg = `*AWC AUDIT*%0AInspecteur: ${n}%0A%0A`;
+        hallen.forEach(h => {
+            const fail = document.getElementById(`item-${h}`).classList.contains('is-fail');
+            msg += fail ? `⚠️ *${h}*: AFWIJKING%0A` : `✅ ${h}: OK%0A`;
+        });
+        window.open(`https://api.whatsapp.com/send?text=${msg}`);
+    }
+
+    window.onload = setup;
+</script>
+</body>
+</html>
