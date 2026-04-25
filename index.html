@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>AWC - Snelkeuze Audit</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.0.0/dist/signature_pad.umd.min.js"></script>
+    <style>
+        :root { --bg: #0f172a; --card: #1e293b; --accent: #38bdf8; --success: #22c55e; --danger: #ef4444; --text: #f8fafc; }
+        body { font-family: sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 10px; padding-bottom: 200px; }
+        .container { max-width: 600px; margin: auto; }
+        .zone-card { background: var(--card); border-radius: 12px; margin-bottom: 15px; border: 1px solid #334155; padding: 15px; }
+        h1 { color: var(--accent); text-align: center; font-size: 1.2rem; text-transform: uppercase; margin: 10px 0; }
+        
+        input[type="text"], select { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #334155; background: #0f172a; color: white; margin-top: 8px; box-sizing: border-box; font-size: 1rem; }
+        
+        .check-item { background: rgba(255,255,255,0.03); padding: 12px; border-radius: 8px; margin-top: 10px; border-left: 4px solid var(--success); }
+        .check-item.has-action { border-left-color: var(--danger); }
+        .check-row { display: flex; align-items: center; justify-content: space-between; }
+        input[type="checkbox"] { width: 30px; height: 30px; accent-color: var(--success); }
+        
+        .extra-info { display: none; margin-top: 10px; padding-top: 10px; border-top: 1px solid #444; }
+        .has-action .extra-info { display: block; }
+        
+        canvas { width: 100%; height: 150px; background: white; border-radius: 8px; touch-action: none; }
+        .footer { position: fixed; bottom: 0; left: 0; right: 0; background: #0f172a; padding: 15px; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; border-top: 2px solid var(--accent); z-index: 1000; }
+        button { padding: 15px; border: none; border-radius: 8px; font-weight: bold; color: white; cursor: pointer; }
+        .btn-pdf { background: var(--danger); grid-column: span 2; font-size: 1.1rem; }
+
+        #pdf-render { display: none; background: white; color: black; padding: 15mm; }
+        .pdf-table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        .pdf-table td, .pdf-table th { border: 1px solid #000; padding: 6px; font-size: 10pt; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>AWC Warehouse Audit</h1>
+
+    <div class="zone-card">
+        <label style="font-size: 0.8rem;">INSPECTEUR:</label>
+        <input type="text" id="user-name" placeholder="Naam...">
+    </div>
+
+    <div id="app-list"></div>
+
+    <div class="zone-card">
+        <label style="color:var(--accent)">HANDTEKENING:</label>
+        <canvas id="sig-pad"></canvas>
+        <button onclick="sig.clear()" style="background:#475569; width:100%; margin-top:5px; padding:5px;">Wis</button>
+    </div>
+
+    <div class="footer">
+        <button style="background:#25D366" onclick="stuurWA()">WhatsApp</button>
+        <button style="background:#0078d4" onclick="window.location.href='mailto:'">E-mail</button>
+        <button class="btn-pdf" onclick="maakPDF()">📄 GENEREER RAPPORT</button>
+    </div>
+</div>
+
+<div id="pdf-render">
+    <h2 style="border-bottom:2px solid black;">AWC Audit Rapport</h2>
+    <p><strong>Inspecteur:</strong> <span id="p-n"></span> | <strong>Datum:</strong> <span id="p-d"></span></p>
+    <table class="pdf-table">
+        <thead><tr style="background:#eee;"><th>Zone</th><th>Status</th><th>Bevinding</th><th>Prio</th></tr></thead>
+        <tbody id="p-b"></tbody>
+    </table>
+    <img id="p-s" style="width:150px; margin-top:20px; border-bottom:1px solid black;">
+</div>
+
+<script>
+    const zones = ["Hal A", "Hal B", "Hal C", "Hal D", "Hal E", "Hal F", "Hal G", "Hal H", "Entresol", "Expeditie", "Toiletten"];
+    
+    // De keuzes voor de dropdown
+    const fouten = [
+        "Geen afwijking",
+        "Folie/Hout op de vloer",
+        "Gangpad geblokkeerd",
+        "Stellingschade geconstateerd",
+        "Nooduitgang niet vrij",
+        "Verlichting defect",
+        "Docks niet vrij",
+        "Schoonmaak onvoldoende",
+        "Overig (zie opmerking)..."
+    ];
+
+    let sig;
+
+    function init() {
+        const container = document.getElementById('app-list');
+        zones.forEach(z => {
+            let selectOptions = fouten.map(f => `<option value="${f}">${f}</option>`).join('');
+            
+            container.innerHTML += `
+            <div class="zone-card">
+                <div class="check-item" id="item-${z}">
+                    <div class="check-row">
+                        <strong>${z}</strong>
+                        <input type="checkbox" checked onchange="document.getElementById('item-${z}').classList.toggle('has-action', !this.checked)">
+                    </div>
+                    <div class="extra-info">
+                        <label style="font-size:0.7rem;">WAT IS HET PROBLEEM?</label>
+                        <select id="select-${z}">${selectOptions}</select>
+                        <input type="text" id="note-${z}" placeholder="Aanvullende details (optioneel)...">
+                        <select id="prio-${z}">
+                            <option value="LAAG">Prioriteit: Laag</option>
+                            <option value="MEDIUM">Prioriteit: Medium</option>
+                            <option value="SPOED">⚠️ SPOED</option>
+                        </select>
+                        <input type="file" accept="image/*" style="margin-top:1
