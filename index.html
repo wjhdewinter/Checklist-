@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>AWC Warehouse Tools FULL PRO - Locations NL/EN</title>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/signature_pad@4.0.0/dist/signature_pad.umd.min.js"></script>
+
+<style>
+:root{
+  --bg:#0f172a;--card:#1e293b;--accent:#ff6a00;--ok:#22c55e;--bad:#ef4444;--urgent:#f97316;--muted:#94a3b8;--wa:#25D366;
+}
+*{box-sizing:border-box}
+body{margin:0;padding:12px;padding-bottom:165px;font-family:Arial,Helvetica,sans-serif;background:linear-gradient(180deg,#020617,#0f172a 45%,#111827);color:white}
+.container{max-width:780px;margin:auto}
+.brand-card{background:linear-gradient(135deg,#111827,#0f172a);border:1px solid #334155;border-radius:18px;padding:18px;margin-bottom:12px;text-align:center}
+.brand-logo{width:220px;max-width:90%;display:block;margin:0 auto 12px;background:white;border-radius:12px;padding:10px}
+h1{font-size:1.35rem;margin:0;color:white}.subtitle{color:#cbd5e1;margin:8px 0 0;font-size:.9rem}
+.card{background:var(--card);border:1px solid #334155;border-radius:14px;padding:15px;margin-bottom:12px}
+label{display:block;margin-top:10px;font-weight:bold}
+input,select,textarea{width:100%;padding:12px;margin-top:6px;border-radius:8px;border:1px solid #334155;background:#0f172a;color:white;font-size:1rem}
+textarea{min-height:74px;resize:vertical}
+.top-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.module-tabs{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
+.tab{background:#334155;color:white;padding:12px;border-radius:10px;border:0;font-weight:bold}
+.tab.active{background:linear-gradient(135deg,#ff6a00,#b91c1c)}
+.location-title{font-size:1.05rem;color:#fff;margin:0 0 8px}
+.check{background:rgba(0,0,0,.24);border-left:6px solid var(--ok);border-radius:10px;padding:12px}
+.check.fail{border-left-color:var(--bad)}.check.urgent{border-left-color:var(--urgent);box-shadow:0 0 0 1px rgba(249,115,22,.45)}
+.row{display:flex;justify-content:space-between;align-items:center;gap:12px}.checkbox{width:36px;height:36px;accent-color:var(--ok);flex-shrink:0}
+.failbox{display:none;margin-top:12px;border-top:1px solid #475569;padding-top:10px}.fail .failbox{display:block}
+small{color:var(--muted)}.preview{display:none;max-width:100%;margin-top:8px;border-radius:8px;border:1px solid #475569}
+#signature{width:100%;height:190px;background:white;border-radius:8px;display:block;touch-action:none}
+.alert-box{display:none;background:#7f1d1d;border:1px solid #f97316;color:#fff7ed;border-radius:12px;padding:12px;margin-bottom:12px;font-weight:bold}
+.footer{position:fixed;left:0;right:0;bottom:0;background:#020617;border-top:2px solid var(--accent);padding:12px;z-index:9999;display:grid;grid-template-columns:1fr 1fr;gap:10px}
+button{width:100%;border:0;border-radius:10px;padding:15px;font-size:1rem;font-weight:bold;color:white}
+button:disabled{opacity:.55}.btn-main{background:linear-gradient(135deg,#ff6a00,#b91c1c)}.btn-wa{background:var(--wa);color:#052e16}.btn-clear{background:#475569;margin-top:8px;padding:10px}
+#pdf-section{display:none;margin-top:15px}.notice{background:#fef3c7;color:#78350f;border-radius:8px;padding:10px;margin-bottom:10px}
+#pdf{background:white;color:black;width:794px;padding:25px;font-family:Arial,Helvetica,sans-serif}
+.pdf-brand{display:flex;align-items:center;gap:18px;border-bottom:4px solid #ff6a00;padding-bottom:12px;margin-bottom:14px;page-break-inside:avoid}
+.pdf-logo-img{width:180px;background:white;object-fit:contain}.pdf-title h2{margin:0;font-size:22px}.pdf-title p{margin:4px 0 0;font-size:12px;color:#334155}
+.pdf-summary{background:#f8fafc;border:1px solid #cbd5e1;padding:10px;margin:10px 0;font-size:12px;page-break-inside:avoid}
+.pdf-table{width:100%;border-collapse:collapse;margin-top:15px;page-break-inside:auto}.pdf-table tr{page-break-inside:avoid;page-break-after:auto}.pdf-table thead{display:table-header-group}
+.pdf-table th,.pdf-table td{border:1px solid #111;padding:7px;font-size:10px;vertical-align:top}.pdf-table th{background:#e5e7eb}
+.pdf-photo{max-width:130px;max-height:100px}.pdf-ok{color:green;font-weight:bold}.pdf-bad{color:red;font-weight:bold}.pdf-urgent{color:#ea580c;font-weight:bold}
+.pdf-urgent-block{display:none;background:#ffedd5;border:2px solid #f97316;padding:10px;margin:12px 0;font-size:12px;page-break-inside:avoid}
+.pdf-signature-block{margin-top:30px;text-align:right;page-break-inside:avoid}#p-sign{width:260px;height:120px;object-fit:contain;border-bottom:1px solid #000;background:white}
+@media(max-width:520px){.top-grid{grid-template-columns:1fr}.module-tabs{grid-template-columns:1fr}.brand-logo{width:190px}}
+@media print{body{background:white;color:black;padding:0}.container>*:not(#pdf-section),.footer{display:none!important}#pdf-section{display:block!important}.notice{display:none}#pdf{width:100%;padding:12mm}}
+</style>
+</head>
+
+<body>
+<div class="container">
+  <div class="brand-card">
+    <img class="brand-logo" src="logo.png" alt="Amsterdam Warehouse Co logo">
+    <h1 id="appTitle">AWC Warehouse Tools FULL PRO</h1>
+    <p class="subtitle" id="appSubtitle">Locatie audit · NL/EN · WhatsApp · PDF</p>
+  </div>
+
+  <div id="urgentAlert" class="alert-box">🚨 SPOED gedetecteerd. WhatsApp en mail worden als SPOED gemarkeerd.</div>
+
+  <div class="card">
+    <div class="top-grid">
+      <div>
+        <label id="languageLabel">Taal / Language</label>
+        <select id="language" onchange="setLanguage(this.value)">
+          <option value="nl">Nederlands</option>
+          <option value="en">English</option>
+        </select>
+      </div>
+      <div>
+        <label id="locationLabel">Locatie</label>
+        <select id="locationSelect" onchange="renderList();updateUrgentState();">
+          <option>Hal A</option><option>Hal B</option><option>Hal C</option><option>Hal D</option>
+          <option>Hal E</option><option>Hal F</option><option>Hal G</option><option>Hal H</option>
+          <option>Expeditie 1</option><option>Expeditie 2</option><option>Expeditie 3</option>
+          <option>Entresol</option><option>Toiletten</option><option>Buitenterrein</option>
+        </select>
+      </div>
+    </div>
+
+    <label id="moduleLabel">Kies module</label>
+    <div class="module-tabs">
+      <button class="tab active" id="tab-daily" onclick="setModule('daily')">Dagelijkse checklist</button>
+      <button class="tab" id="tab-return" onclick="setModule('return')">Retouren</button>
+      <button class="tab" id="tab-bhv" onclick="setModule('bhv')">BHV</button>
+      <button class="tab" id="tab-leader" onclick="setModule('leader')">Teamleider</button>
+    </div>
+
+    <label id="nameLabel">Naam</label>
+    <input id="name" placeholder="Naam inspecteur / medewerker">
+
+    <div id="returnFields" style="display:none;">
+      <label id="customerLabel">Klant / referentie</label>
+      <input id="customer" placeholder="Klantnaam of referentie">
+      <label id="orderLabel">Ordernummer / retournummer</label>
+      <input id="order" placeholder="Ordernummer of retournummer">
+    </div>
+
+    <small id="moduleHelp">Vinkje aan = OK. Vinkje uit = actiepunt met foto/details.</small>
+  </div>
+
+  <div id="list"></div>
+
+  <div class="card">
+    <label id="generalLabel" style="color:var(--accent)">Algemene opmerkingen</label>
+    <textarea id="generalNotes" placeholder="Extra opmerkingen voor het rapport..."></textarea>
+  </div>
+
+  <div class="card">
+    <label id="signatureLabel" style="color:var(--accent)">Handtekening</label>
+    <canvas id="signature"></canvas>
+    <button class="btn-clear" id="clearBtn" onclick="clearSig()">Wis handtekening</button>
+  </div>
+
+  <div id="pdf-section">
+    <div class="notice" id="pdfNotice">PDF-preview zichtbaar. De PDF loopt door over meerdere pagina’s als dat nodig is.</div>
+    <div id="pdf">
+      <div class="pdf-brand">
+        <img class="pdf-logo-img" src="logo.png" alt="Amsterdam Warehouse Co logo">
+        <div class="pdf-title">
+          <h2 id="pdf-main-title">Warehouse Rapportage</h2>
+          <p>Amsterdam Warehouse Co · The place to go</p>
+        </div>
+      </div>
+      <div id="p-urgent-block" class="pdf-urgent-block">🚨 SPOEDMELDING: In deze rapportage staat minimaal één actiepunt met prioriteit SPOED.</div>
+      <div class="pdf-summary">
+        <p><b id="p-module-label">Module:</b> <span id="p-module"></span></p>
+        <p><b id="p-location-label">Locatie:</b> <span id="p-location"></span></p>
+        <p><b id="p-name-label">Naam:</b> <span id="p-name"></span></p>
+        <p id="p-customer-line" style="display:none;"><b id="p-customer-label">Klant / referentie:</b> <span id="p-customer"></span></p>
+        <p id="p-order-line" style="display:none;"><b id="p-order-label">Order / retournummer:</b> <span id="p-order"></span></p>
+        <p><b id="p-date-label">Datum:</b> <span id="p-date"></span></p>
+        <p><b>OK:</b> <span id="p-ok-count"></span> · <b>Acties:</b> <span id="p-action-count"></span> · <b>SPOED:</b> <span id="p-urgent-count"></span></p>
+      </div>
+      <table class="pdf-table">
+        <thead><tr><th id="th-point">Controlepunt</th><th id="th-status">Status</th><th id="th-details">Afwijking / details</th><th id="th-prio">Prio</th><th id="th-photo">Foto</th></tr></thead>
+        <tbody id="p-body"></tbody>
+      </table>
+      <div style="margin-top:16px;page-break-inside:avoid;"><p><b id="p-general-label">Algemene opmerkingen:</b></p><p id="p-general"></p></div>
+      <div class="pdf-signature-block"><p><b id="p-sign-label">Handtekening:</b></p><img id="p-sign"></div>
+    </div>
+  </div>
+</div>
+
+<div class="footer">
+  <button class="btn-wa" id="waBtn" onclick="sendWhatsApp()">💬 WhatsApp</button>
+  <button class="btn-main" id="mainBtn" onclick="makePDF()">📄 PDF + MAIL</button>
+</div>
+
+<script>
+const MAIL_TO = "willem@amsterdamwarehouse.com";
+let currentLang = "nl";
+let currentModule = "daily";
+let sigPad;
+
+const translations = {
+  nl:{
+    appTitle:"AWC Warehouse Tools FULL PRO", appSubtitle:"Locatie audit · NL/EN · WhatsApp · PDF",
+    language:"Taal / Language", location:"Locatie", module:"Kies module", name:"Naam",
+    customer:"Klant / referentie", order:"Ordernummer / retournummer", general:"Algemene opmerkingen",
+    signature:"Handtekening", clear:"Wis handtekening", pdfMail:"📄 PDF + MAIL",
+    whatsapp:"💬 WhatsApp", ok:"OK", action:"ACTIE", urgent:"SPOED",
+    moduleLabel:"Module:", locationLabel:"Locatie:", nameLabel:"Naam:", dateLabel:"Datum:",
+    point:"Controlepunt", status:"Status", details:"Afwijking / details", prio:"Prio", photo:"Foto",
+    generalPdf:"Algemene opmerkingen:", signPdf:"Handtekening:",
+    fillName:"Vul eerst een naam in.", signRequired:"Handtekening is verplicht.",
+    pdfNotice:"PDF-preview zichtbaar. De PDF loopt door over meerdere pagina’s als dat nodig is.",
+    generated:"PDF is gemaakt. De mail wordt geopend. Voeg de PDF toe als bijlage.",
+    urgentGenerated:"SPOED gedetecteerd. PDF is gemaakt en de mail wordt als SPOED klaargezet.",
+    moduleNames:{daily:"Dagelijkse checklist",return:"Retouren",bhv:"BHV",leader:"Teamleider"},
+    title:{
+      daily:"Dagelijkse magazijn checklist", return:"Retour aanmelden", bhv:"BHV inspectie", leader:"Teamleider inspectie"
+    }
+  },
+  en:{
+    appTitle:"AWC Warehouse Tools FULL PRO", appSubtitle:"Location audit · NL/EN · WhatsApp · PDF",
+    language:"Language / Taal", location:"Location", module:"Select module", name:"Name",
+    customer:"Customer / reference", order:"Order number / return number", general:"General comments",
+    signature:"Signature", clear:"Clear signature", pdfMail:"📄 PDF + EMAIL",
+    whatsapp:"💬 WhatsApp", ok:"OK", action:"ACTION", urgent:"URGENT",
+    moduleLabel:"Module:", locationLabel:"Location:", nameLabel:"Name:", dateLabel:"Date:",
+    point:"Check item", status:"Status", details:"Issue / details", prio:"Priority", photo:"Photo",
+    generalPdf:"General comments:", signPdf:"Signature:",
+    fillName:"Please enter a name first.", signRequired:"Signature is required.",
+    pdfNotice:"PDF preview is visible. The PDF continues across multiple pages when needed.",
+    generated:"PDF created. Email will open. Add the PDF as attachment.",
+    urgentGenerated:"URGENT detected. PDF created and email will be marked as URGENT.",
+    moduleNames:{daily:"Daily checklist",return:"Returns",bhv:"Emergency / Safety",leader:"Team leader"},
+    title:{
+      daily:"Daily warehouse checklist", return:"Return registration", bhv:"Emergency / Safety inspection", leader:"Team leader workplace inspection"
+    }
+  }
+};
+
+const moduleData = {
+  daily: {
+    pdfTitle:{nl:"Dagelijkse Magazijn Checklist", en:"Daily Warehouse Checklist"},
+    help:{nl:"Controle per locatie: netheid, veiligheid, docks, looppaden en blokkades.", en:"Location check: cleanliness, safety, docks, walkways and blockages."},
+    items:{nl:["Looppaden vrij","Docks schoon en veilig","Nooduitgangen vrij","Afval verwijderd","Pallets correct gestapeld","Vloer schoon en droog","Verlichting in orde","Geen schade aan stellingen"], en:["Walkways clear","Docks clean and safe","Emergency exits clear","Waste removed","Pallets stacked correctly","Floor clean and dry","Lighting OK","No rack damage"]},
+    issues:{nl:["Rommel / obstakel","Blokkade","Vuil / afval","Schade","Onveilige situatie","Lekkage","Overig"], en:["Mess / obstacle","Blocked","Dirt / waste","Damage","Unsafe situation","Leakage","Other"]}
+  },
+  return: {
+    pdfTitle:{nl:"Retour Rapportage", en:"Return Report"},
+    help:{nl:"Registreer retouren met klantgegevens, reden, foto’s en status.", en:"Register returns with customer details, reason, photos and status."},
+    items:{nl:["Retour ontvangen","Verpakking gecontroleerd","Product gecontroleerd","Schade zichtbaar","Aantal gecontroleerd","Label / ordernummer aanwezig","Foto bewijs toegevoegd","Retour klaar voor verwerking"], en:["Return received","Packaging checked","Product checked","Visible damage","Quantity checked","Label / order number present","Photo evidence added","Return ready for processing"]},
+    issues:{nl:["Beschadigd product","Beschadigde verpakking","Aantal klopt niet","Verkeerd artikel","Geen label","Klantclaim","Overig"], en:["Damaged product","Damaged packaging","Quantity mismatch","Wrong item","No label","Customer claim","Other"]}
+  },
+  bhv: {
+    pdfTitle:{nl:"BHV Veiligheidsinspectie", en:"Emergency / Safety Inspection"},
+    help:{nl:"Controleer nooduitgangen, vluchtwegen, brandblussers, EHBO en evacuatiepunten.", en:"Check emergency exits, escape routes, extinguishers, first aid and assembly points."},
+    items:{nl:["Nooduitgangen vrij","Vluchtwegen vrij","Brandblussers bereikbaar","EHBO materiaal aanwezig","Evacuatie verzamelplaats vrij","Noodverlichting zichtbaar","Brandmelders vrij","Aanwezigenregistratie mogelijk"], en:["Emergency exits clear","Escape routes clear","Fire extinguishers accessible","First aid available","Assembly point clear","Emergency lighting visible","Fire alarms unobstructed","Attendance registration possible"]},
+    issues:{nl:["Geblokkeerd","Niet bereikbaar","Ontbreekt","Defect","Niet zichtbaar","Onveilige situatie","Overig"], en:["Blocked","Not accessible","Missing","Defective","Not visible","Unsafe situation","Other"]}
+  },
+  leader: {
+    pdfTitle:{nl:"Teamleider Werkplekinspectie", en:"Team Leader Workplace Inspection"},
+    help:{nl:"Inspectie per team/afdeling: werkplek, veiligheid, productiviteit en verbeterpunten.", en:"Team/department inspection: workplace, safety, productivity and improvements."},
+    items:{nl:["Werkplek netjes","Team werkt veilig","Productiviteit op orde","Instructies duidelijk","Materialen aanwezig","Knelpunten gemeld","Afwijkingen opgevolgd","Communicatie op orde"], en:["Workplace tidy","Team works safely","Productivity on track","Instructions clear","Materials available","Bottlenecks reported","Issues followed up","Communication OK"]},
+    issues:{nl:["Onveilig gedrag","Werkplek rommelig","Materiaal ontbreekt","Procesvertraging","Instructie onduidelijk","Kwaliteitsissue","Overig"], en:["Unsafe behavior","Messy workplace","Material missing","Process delay","Instruction unclear","Quality issue","Other"]}
+  }
+};
+
+function t(key){return translations[currentLang][key];}
+function makeId(text){return text.replace(/\s+/g,"_").replace(/[^a-zA-Z0-9_]/g,"");}
+function selectedLocation(){return document.getElementById("locationSelect").value;}
+
+function setLanguage(lang){
+  currentLang = lang;
+  document.documentElement.lang = lang;
+  document.getElementById("appTitle").innerText=t("appTitle");
+  document.getElementById("appSubtitle").innerText=t("appSubtitle");
+  document.getElementById("languageLabel").innerText=t("language");
+  document.getElementById("locationLabel").innerText=t("location");
+  document.getElementById("moduleLabel").innerText=t("module");
+  document.getElementById("nameLabel").innerText=t("name");
+  document.getElementById("customerLabel").innerText=t("customer");
+  document.getElementById("orderLabel").innerText=t("order");
+  document.getElementById("generalLabel").innerText=t("general");
+  document.getElementById("signatureLabel").innerText=t("signature");
+  document.getElementById("clearBtn").innerText=t("clear");
+  document.getElementById("waBtn").innerText=t("whatsapp");
+  document.getElementById("mainBtn").innerText=t("pdfMail");
+  document.getElementById("pdfNotice").innerText=t("pdfNotice");
+  document.getElementById("tab-daily").innerText=t("moduleNames").daily;
+  document.getElementById("tab-return").innerText=t("moduleNames").return;
+  document.getElementById("tab-bhv").innerText=t("moduleNames").bhv;
+  document.getElementById("tab-leader").innerText=t("moduleNames").leader;
+  document.getElementById("p-module-label").innerText=t("moduleLabel");
+  document.getElementById("p-location-label").innerText=t("locationLabel");
+  document.getElementById("p-name-label").innerText=t("nameLabel");
+  document.getElementById("p-date-label").innerText=t("dateLabel");
+  document.getElementById("p-customer-label").innerText=t("customer")+":";
+  document.getElementById("p-order-label").innerText=t("order")+":";
+  document.getElementById("th-point").innerText=t("point");
+  document.getElementById("th-status").innerText=t("status");
+  document.getElementById("th-details").innerText=t("details");
+  document.getElementById("th-prio").innerText=t("prio");
+  document.getElementById("th-photo").innerText=t("photo");
+  document.getElementById("p-general-label").innerText=t("generalPdf");
+  document.getElementById("p-sign-label").innerText=t("signPdf");
+  renderList();
+}
+
+function setModule(moduleKey){
+  currentModule = moduleKey;
+  document.querySelectorAll(".tab").forEach(tab=>tab.classList.remove("active"));
+  document.getElementById("tab-"+moduleKey).classList.add("active");
+  document.getElementById("returnFields").style.display = moduleKey==="return" ? "block" : "none";
+  renderList();
+  updateUrgentState();
+}
+
+function renderList(){
+  const list = document.getElementById("list");
+  const data = moduleData[currentModule];
+  const items = data.items[currentLang];
+  const issues = data.issues[currentLang];
+  list.innerHTML = `<div class="card"><p class="location-title">${t("location")}: ${selectedLocation()}</p><small>${data.help[currentLang]}</small></div>`;
+
+  items.forEach((item,index)=>{
+    const id = "item_"+index;
+    const options = issues.map(i=>`<option>${i}</option>`).join("");
+    list.insertAdjacentHTML("beforeend", `
+      <div class="card">
+        <div class="check" id="card_${id}">
+          <div class="row">
+            <div><b>${item}</b><br><small>${currentLang==="nl" ? "Aan = OK / Uit = actiepunt" : "On = OK / Off = action point"}</small></div>
+            <input class="checkbox" type="checkbox" checked onchange="toggleFail('${id}', this.checked)">
+          </div>
+          <div class="failbox">
+            <label>${currentLang==="nl" ? "Afwijking / reden" : "Issue / reason"}</label>
+            <select id="issue_${id}">${options}</select>
+            <label>${currentLang==="nl" ? "Details" : "Details"}</label>
+            <textarea id="detail_${id}" placeholder="${currentLang==="nl" ? "Omschrijf details, locatie of actie..." : "Describe details, location or action..."}"></textarea>
+            <label>${t("prio")}</label>
+            <select id="prio_${id}" onchange="updateUrgentState()">
+              <option>LAAG</option><option>MEDIUM</option><option>SPOED</option>
+            </select>
+            <label>${t("photo")}</label>
+            <input type="file" accept="image/*" id="photo_${id}" onchange="previewPhoto('${id}')">
+            <img class="preview" id="preview_${id}">
+          </div>
+        </div>
+      </div>
+    `);
+  });
+  document.getElementById("moduleHelp").innerText=data.help[currentLang];
+}
+
+function init(){
+  renderList();
+  initSignature();
+  setLanguage("nl");
+}
+
+function initSignature(){
+  const canvas=document.getElementById("signature");
+  sigPad=new SignaturePad(canvas,{backgroundColor:"white",minWidth:0.8,maxWidth:2.8});
+  resizeSignature();
+}
+
+function resizeSignature(){
+  const canvas=document.getElementById("signature");
+  const ratio=Math.max(window.devicePixelRatio||1,1);
+  const data=sigPad && !sigPad.isEmpty()?sigPad.toData():null;
+  canvas.width=canvas.offsetWidth*ratio;
+  canvas.height=canvas.offsetHeight*ratio;
+  const ctx=canvas.getContext("2d");
+  ctx.scale(ratio,ratio);
+  ctx.fillStyle="white";ctx.fillRect(0,0,canvas.offsetWidth,canvas.offsetHeight);
+  if(sigPad){sigPad.clear(); if(data) sigPad.fromData(data);}
+}
+function clearSig(){if(sigPad)sigPad.clear();}
+function toggleFail(id,checked){document.getElementById("card_"+id).classList.toggle("fail",!checked);updateUrgentState();}
+
+function updateUrgentState(){
+  let hasUrgent=false;
+  moduleData[currentModule].items[currentLang].forEach((item,index)=>{
+    const id="item_"+index;
+    const card=document.getElementById("card_"+id);
+    if(!card)return;
+    const fail=card.classList.contains("fail");
+    const prio=document.getElementById("prio_"+id).value;
+    const urgent=fail && prio==="SPOED";
+    card.classList.toggle("urgent",urgent);
+    if(urgent)hasUrgent=true;
+  });
+  document.getElementById("urgentAlert").style.display=hasUrgent?"block":"none";
+}
+
+function previewPhoto(id){
+  const input=document.getElementById("photo_"+id);
+  const img=document.getElementById("preview_"+id);
+  if(!input.files || !input.files[0]){img.style.display="none";img.src="";return;}
+  const reader=new FileReader();
+  reader.onload=e=>{img.src=e.target.result;img.style.display="block";};
+  reader.readAsDataURL(input.files[0]);
+}
+
+function photoToData(file){
+  return new Promise(resolve=>{
+    if(!file)return resolve("");
+    const reader=new FileReader();
+    reader.onload=e=>{
+      const img=new Image();
+      img.onload=()=>{
+        const canvas=document.createElement("canvas");
+        const max=600;
+        const scale=Math.min(max/img.width,1);
+        canvas.width=img.width*scale;canvas.height=img.height*scale;
+        canvas.getContext("2d").drawImage(img,0,0,canvas.width,canvas.height);
+        resolve(canvas.toDataURL("image/jpeg",0.75));
+      };
+      img.onerror=()=>resolve("");
+      img.src=e.target.result;
+    };
+    reader.onerror=()=>resolve("");
+    reader.readAsDataURL(file);
+  });
+}
+
+function escapeHtml(str){
+  return String(str).replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]));
+}
+
+function getReportData(){
+  const items=moduleData[currentModule].items[currentLang];
+  const urgent=[]; const actions=[]; let okCount=0;
+  items.forEach((item,index)=>{
+    const id="item_"+index;
+    const card=document.getElementById("card_"+id);
+    const fail=card.classList.contains("fail");
+    if(!fail){okCount++;return;}
+    const prio=document.getElementById("prio_"+id).value;
+    const issue=document.getElementById("issue_"+id).value;
+    const detail=document.getElementById("detail_"+id).value;
+    const obj={item,issue,detail,prio};
+    actions.push(obj);
+    if(prio==="SPOED")urgent.push(obj);
+  });
+  return {actions,urgent,okCount,total:items.length};
+}
+
+function buildWhatsAppMessage(){
+  const name=document.getElementById("name").value.trim() || "-";
+  const loc=selectedLocation();
+  const customer=document.getElementById("customer").value.trim();
+  const order=document.getElementById("order").value.trim();
+  const general=document.getElementById("generalNotes").value.trim();
+  const data=moduleData[currentModule];
+  const report=getReportData();
+
+  let msg="";
+  msg += report.urgent.length ? "🚨 *AWC SPOED MELDING*\\n" : "📋 *AWC WAREHOUSE RAPPORT*\\n";
+  msg += "━━━━━━━━━━━━━━\\n";
+  msg += `*Module:* ${translations[currentLang].title[currentModule]}\\n`;
+  msg += `*Locatie:* ${loc}\\n`;
+  msg += `*Naam:* ${name}\\n`;
+  msg += `*Datum:* ${new Date().toLocaleString("nl-NL")}\\n`;
+  if(currentModule==="return"){
+    msg += `*Klant/ref:* ${customer || "-"}\\n`;
+    msg += `*Order/retour:* ${order || "-"}\\n`;
+  }
+  msg += "━━━━━━━━━━━━━━\\n";
+  msg += `✅ *OK:* ${report.okCount}/${report.total}\\n`;
+  msg += `⚠️ *Acties:* ${report.actions.length}\\n`;
+  msg += `🚨 *SPOED:* ${report.urgent.length}\\n`;
+
+  if(report.actions.length){
+    msg += "\\n*ACTIEPUNTEN*\\n";
+    report.actions.forEach((a,i)=>{
+      const icon=a.prio==="SPOED"?"🚨":"⚠️";
+      msg += `${i+1}. ${icon} *${a.item}*\\n`;
+      msg += `   Reden: ${a.issue}\\n`;
+      if(a.detail) msg += `   Details: ${a.detail}\\n`;
+      msg += `   Prio: ${a.prio}\\n`;
+    });
+  } else {
+    msg += "\\n✅ Geen actiepunten gevonden.\\n";
+  }
+
+  if(general){
+    msg += "\\n*OPMERKING*\\n";
+    msg += `${general}\\n`;
+  }
+  msg += "━━━━━━━━━━━━━━\\n";
+  msg += "PDF is apart gegenereerd vanuit de AWC app.";
+  return msg;
+}
+
+function sendWhatsApp(){
+  window.open("https://api.whatsapp.com/send?text="+encodeURIComponent(buildWhatsAppMessage()),"_blank");
+}
+
+async function makePDF(){
+  const name=document.getElementById("name").value.trim();
+  const loc=selectedLocation();
+  const customer=document.getElementById("customer").value.trim();
+  const order=document.getElementById("order").value.trim();
+  const general=document.getElementById("generalNotes").value.trim();
+  const data=moduleData[currentModule];
+
+  if(!name){alert(t("fillName"));return;}
+  if(!sigPad || sigPad.isEmpty()){alert(t("signRequired"));return;}
+
+  const btn=document.getElementById("mainBtn");
+  btn.disabled=true;btn.innerText="⏳ PDF...";
+
+  try{
+    const report=getReportData();
+    document.getElementById("pdf-main-title").innerText=data.pdfTitle[currentLang];
+    document.getElementById("p-module").innerText=translations[currentLang].title[currentModule];
+    document.getElementById("p-location").innerText=loc;
+    document.getElementById("p-name").innerText=name;
+    document.getElementById("p-date").innerText=new Date().toLocaleString("nl-NL");
+    document.getElementById("p-sign").src=sigPad.toDataURL("image/png");
+    document.getElementById("p-general").innerText=general || "-";
+    document.getElementById("p-urgent-block").style.display=report.urgent.length?"block":"none";
+    document.getElementById("p-ok-count").innerText=report.okCount+"/"+report.total;
+    document.getElementById("p-action-count").innerText=report.actions.length;
+    document.getElementById("p-urgent-count").innerText=report.urgent.length;
+    document.getElementById("p-customer-line").style.display=currentModule==="return"?"block":"none";
+    document.getElementById("p-order-line").style.display=currentModule==="return"?"block":"none";
+    document.getElementById("p-customer").innerText=customer || "-";
+    document.getElementById("p-order").innerText=order || "-";
+
+    const tbody=document.getElementById("p-body");
+    tbody.innerHTML="";
+    const items=data.items[currentLang];
+    for(let index=0; index<items.length; index++){
+      const item=items[index];
+      const id="item_"+index;
+      const fail=document.getElementById("card_"+id).classList.contains("fail");
+      const file=document.getElementById("photo_"+id).files[0];
+      let photo="-";
+      if(fail && file){
+        const pd=await photoToData(file);
+        if(pd) photo=`<img class="pdf-photo" src="${pd}">`;
+      }
+      const issue=fail?document.getElementById("issue_"+id).value:(currentLang==="nl"?"In orde":"OK");
+      const detail=fail?document.getElementById("detail_"+id).value:"";
+      const prio=fail?document.getElementById("prio_"+id).value:"-";
+      const prioClass=prio==="SPOED"?"pdf-urgent":"";
+      tbody.insertAdjacentHTML("beforeend",`
+        <tr>
+          <td><b>${escapeHtml(item)}</b></td>
+          <td class="${fail?"pdf-bad":"pdf-ok"}">${fail?t("action"):t("ok")}</td>
+          <td>${escapeHtml(issue)}<br><small>${escapeHtml(detail)}</small></td>
+          <td class="${prioClass}">${escapeHtml(prio)}</td>
+          <td>${photo}</td>
+        </tr>
+      `);
+    }
+
+    const pdfSection=document.getElementById("pdf-section");
+    const pdfElement=document.getElementById("pdf");
+    pdfSection.style.display="block";
+    pdfSection.scrollIntoView({behavior:"smooth",block:"start"});
+    await new Promise(resolve=>setTimeout(resolve,900));
+
+    const cleanName=name.replace(/\s+/g,"_").replace(/[^a-zA-Z0-9_-]/g,"");
+    const cleanLoc=loc.replace(/\s+/g,"_").replace(/[^a-zA-Z0-9_-]/g,"");
+    const cleanModule=translations[currentLang].title[currentModule].replace(/\s+/g,"_").replace(/[^a-zA-Z0-9_-]/g,"");
+    const cleanDate=new Date().toLocaleDateString("nl-NL").replaceAll("-","_").replaceAll("/","_");
+    const filename=`AWC_${cleanLoc}_${cleanModule}_${cleanName}_${cleanDate}.pdf`;
+
+    const opt={
+      margin:8,
+      filename:filename,
+      image:{type:"jpeg",quality:0.98},
+      html2canvas:{scale:2,useCORS:true,allowTaint:true,backgroundColor:"#ffffff",scrollX:0,scrollY:0,windowWidth:794},
+      jsPDF:{unit:"mm",format:"a4",orientation:"portrait"},
+      pagebreak:{mode:["css","legacy"],avoid:".pdf-signature-block"}
+    };
+
+    const blob=await html2pdf().from(pdfElement).set(opt).outputPdf("blob");
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement("a");
+    a.href=url;a.download=filename;document.body.appendChild(a);a.click();a.remove();
+    window.open(url,"_blank");
+
+    const subjectPrefix=report.urgent.length?"SPOED - ":"";
+    const subject=encodeURIComponent(`${subjectPrefix}AWC ${loc} - ${translations[currentLang].title[currentModule]} - ${name}`);
+    const body=encodeURIComponent(buildWhatsAppMessage().replace(/\*/g,""));
+    setTimeout(()=>{window.location.href=`mailto:${MAIL_TO}?subject=${subject}&body=${body}`;},1200);
+    alert(report.urgent.length?t("urgentGenerated"):t("generated"));
+  }catch(err){
+    alert("Fout / Error: "+err.message);
+  }finally{
+    btn.disabled=false;btn.innerText=t("pdfMail");
+  }
+}
+
+window.addEventListener("load",init);
+window.addEventListener("resize",resizeSignature);
+</script>
+</body>
+</html>
