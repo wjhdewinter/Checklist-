@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>AWC Audit - Foto & PDF Fix</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.0.0/dist/signature_pad.umd.min.js"></script>
+    
+    <style>
+        :root { --bg: #0f172a; --card: #1e293b; --accent: #38bdf8; --success: #22c55e; --danger: #ef4444; --text: #f8fafc; }
+        body { font-family: sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 10px; padding-bottom: 220px; }
+        .container { max-width: 600px; margin: auto; }
+        .zone-card { background: var(--card); border-radius: 12px; margin-bottom: 12px; padding: 15px; border: 1px solid #334155; }
+        h1 { color: var(--accent); text-align: center; font-size: 1.2rem; }
+        
+        input[type="text"], select { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #334155; background: #0f172a; color: white; margin-top: 8px; box-sizing: border-box; font-size: 1rem; }
+        
+        .check-item { background: rgba(0,0,0,0.2); padding: 12px; border-radius: 8px; border-left: 5px solid var(--success); }
+        .check-item.is-fail { border-left-color: var(--danger); }
+        .check-row { display: flex; align-items: center; justify-content: space-between; }
+        input[type="checkbox"] { width: 35px; height: 35px; accent-color: var(--success); }
+        
+        .fail-ui { display: none; margin-top: 15px; padding-top: 10px; border-top: 1px solid #444; }
+        .is-fail .fail-ui { display: block; }
+        
+        /* Foto knop stijl */
+        .file-input { margin-top: 10px; background: #334155; padding: 10px; border-radius: 8px; width: 100%; box-sizing: border-box; font-size: 0.8rem; }
+
+        .sig-container { background: white; border-radius: 8px; margin-top: 10px; }
+        canvas { width: 100%; height: 150px; touch-action: none; border-radius: 8px; }
+
+        .footer { position: fixed; bottom: 0; left: 0; right: 0; background: #0f172a; padding: 15px; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; border-top: 2px solid var(--accent); z-index: 1000; }
+        button { padding: 18px; border: none; border-radius: 8px; font-weight: bold; color: white; cursor: pointer; }
+        .btn-pdf { background: var(--danger); grid-column: span 2; font-size: 1.1rem; }
+
+        /* PDF OUTPUT STIJL - Nu onderaan de pagina voor betere rendering */
+        #pdf-render-area { 
+            background: white; 
+            color: black; 
+            padding: 20px; 
+            width: 100%; 
+            box-sizing: border-box;
+            display: block; 
+            margin-top: 50px;
+            border-top: 5px solid #000;
+        }
+        .pdf-table { width: 100%; border-collapse: collapse; margin-top: 20px; color: black; }
+        .pdf-table th, .pdf-table td { border: 1px solid #000; padding: 8px; text-align: left; font-size: 10pt; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="zone-card">
+        <h1>AWC Magazijn Audit</h1>
+        <label>Naam Inspecteur:</label>
+        <input type="text" id="ins-name" placeholder="Willem...">
+    </div>
+
+    <div id="main-list"></div>
+
+    <div class="zone-card">
+        <label style="color:var(--accent); font-weight:bold;">HANDTEKENING:</label>
+        <div class="sig-container"><canvas id="sig-pad"></canvas></div>
+        <button onclick="sigPad.clear()" style="background:#475569; width:100%; margin-top:5px; padding:5px;">Wis</button>
+    </div>
+
+    <div class="footer">
+        <button style="background:#25D366" onclick="sendWA()">WhatsApp</button>
+        <button style="background:#0078d4" onclick="window.location.href='mailto:?subject=Audit'">E-mail</button>
+        <button class="btn-pdf" id="btn-gen" onclick="makePDF()">📄 GENEREER PDF RAPPORT</button>
+    </div>
+
+    <div id="pdf-render-area">
+        <h2 style="text-align:center; margin:0;">AMSTERDAM WAREHOUSE COMPANY</h2>
+        <p style="text-align:center; border-bottom:2px solid #000; padding-bottom:10px;">AUDIT RAPPORTAGE</p>
+        <p><strong>Inspecteur:</strong> <span id="p-n"></span></p>
+        <p><strong>Datum:</strong> <span id="p-d"></span></p>
+        <table class="pdf-table">
+            <thead><tr style="background:#eee;"><th>Zone</th><th>Status</th><th>Omschrijving</th><th>Prio</th></tr></thead>
+            <tbody id="p-b"></tbody>
+        </table>
+        <div style="margin-top:30px; text-align:right;">
+            <p>Handtekening:</p>
+            <img id="p-s" style="width:150px; border-bottom:1px solid #000;">
+        </div>
+    </div>
+</div>
+
+<script>
+    const zones = ["Hal A", "Hal B", "Hal C", "Hal D", "Hal E", "Hal F", "Hal G", "Hal H", "Entresol", "Expeditie", "Toiletten"];
+    const issues = ["Geen afwijking", "Folie/Hout op vloer", "Stellingschade", "Nooduitgang geblokkeerd", "Verlichting defect", "Lekkage", "Overig..."];
+    
+    let sigPad;
+
+    function init() {
+        const list = document.getElementById('main-list');
+        zones.forEach(z => {
+            let options = issues.map(i => `<option value="${i}">${i}</option>`).join('');
+            list.innerHTML += `
+            <div class="zone-card">
+                <div class="check-item" id="card-${z}">
+                    <div class="check-row">
+                        <strong>${z}</strong>
+                        <input type="checkbox" checked onchange="document.getElementById('card-${z}').classList.toggle('is-fail', !this.checked)">
+                    </div>
+                    <div class="fail-ui">
+                        <select id="sel-${z}">${options}</select>
+                        <input type="text" id="txt-${z}" placeholder="Details/Locatie...">
+                        <select id="prio-${z}"><option>LAAG</option><option>MEDIUM</option><option>SPOED</option></select>
+                        <input type="file" accept="image/*" class="file-input" id="img-${z}">
+                    </div>
+                </div>
+            </div>`;
+        });
+
+        const canvas = document.getElementById('sig-pad');
+        sigPad = new SignaturePad(canvas);
+        const ratio = Math.max(window.devicePixelRatio || 1, 1);
+        canvas.width = canvas.offsetWidth * ratio; canvas.height = canvas.offsetHeight * ratio;
+        canvas.getContext("2d").scale(ratio, ratio);
+    }
+
+    function sendWA() {
+        const name = document.getElementById('ins-name').value || "Willem";
+        let text = `*AWC AUDIT*%0AInspecteur: ${name}%0A%0A`;
+        zones.forEach(z => {
+            const fail = document.getElementById(`card-${z}`).classList.contains('is-fail');
+            text += fail ? `⚠️ *${z}*: ${document.getElementById(`sel-${z}`).value}%0A` : `✅ ${z}: OK%0A`;
+        });
+        window.open(`https://api.whatsapp.com/send?text=${text}`);
+    }
+
+    async function makePDF() {
+        const name = document.getElementById('ins-name').value;
+        const btn = document.getElementById('btn-gen');
+        if(!name || sigPad.isEmpty()) return alert("Naam en handtekening verplicht!");
+
+        btn.innerText = "⏳ BEZIG MET MAKEN...";
+        btn.disabled = true;
+
+        document.getElementById('p-n').innerText = name;
+        document.getElementById('p-d').innerText = new Date().toLocaleString();
+        document.getElementById('p-s').src = sigPad.toDataURL();
+        
+        const tbody = document.getElementById('p-b');
+        tbody.innerHTML = "";
+
+        zones.forEach(z => {
+            const fail = document.getElementById(`card-${z}`).classList.contains('is-fail');
+            tbody.innerHTML += `<tr>
+                <td><b>${z}</b></td>
+                <td style="color:${fail?'red':'green'}">${fail?'ACTIE':'OK'}</td>
+                <td>${fail ? document.getElementById(`sel-${z}`).value + " (" + document.getElementById(`txt-${z}`).value + ")" : 'In orde'}</td>
+                <td>${fail ? document.getElementById(`prio-${z}`).value : '-'}</td>
+            </tr>`;
+        });
+
+        // De PDF Maker
+        const element = document.getElementById('pdf-render-area');
+        const opt = {
+            margin: 10,
+            filename: `AWC_Audit_${name}.pdf`,
+            html2canvas: { scale: 2, useCORS: true },
+            jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+        };
+
+        try {
+            await html2pdf().from(element).set(opt).save();
+            alert("Rapport succesvol opgeslagen!");
+        } catch(err) {
+            alert("Fout: " + err);
+        } finally {
+            btn.innerText = "📄 GENEREER PDF RAPPORT";
+            btn.disabled = false;
+        }
+    }
+
+    window.onload = init;
+</script>
+</body>
+</html>
