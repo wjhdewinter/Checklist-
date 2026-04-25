@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AWC Audit V9</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <style>
+        :root { --bg: #0f172a; --card: #1e293b; --accent: #38bdf8; --text: #f8fafc; }
+        body { font-family: sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 10px; padding-bottom: 120px; }
+        .container { max-width: 600px; margin: auto; }
+        .zone-card { background: var(--card); border-radius: 12px; margin-bottom: 12px; padding: 15px; border: 1px solid #334155; }
+        input[type="text"], select { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #334155; background: #0f172a; color: white; margin-top: 8px; box-sizing: border-box; }
+        .check-row { display: flex; align-items: center; justify-content: space-between; }
+        input[type="checkbox"] { width: 30px; height: 30px; }
+        .fail-ui { display: none; margin-top: 10px; }
+        .is-fail .fail-ui { display: block; }
+        .footer { position: fixed; bottom: 0; left: 0; right: 0; background: #0f172a; padding: 15px; border-top: 2px solid var(--accent); }
+        button { width: 100%; padding: 18px; border: none; border-radius: 8px; font-weight: bold; color: white; cursor: pointer; background: #ef4444; font-size: 1.1rem; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="zone-card">
+        <h2 style="text-align:center; color:var(--accent);">AWC Magazijn Audit</h2>
+        <input type="text" id="ins-name" placeholder="Naam Inspecteur...">
+    </div>
+
+    <div id="zones-list"></div>
+
+    <div class="footer">
+        <button id="pdf-btn" onclick="makePDF()">📄 DOWNLOAD PDF</button>
+    </div>
+</div>
+
+<script>
+    const zones = ["Hal A", "Hal B", "Hal C", "Hal D", "Hal E", "Hal F", "Hal G", "Hal H", "Entresol", "Expeditie", "Toiletten"];
+    
+    function build() {
+        const list = document.getElementById('zones-list');
+        zones.forEach(z => {
+            list.innerHTML += `
+            <div class="zone-card" id="card-${z}">
+                <div class="check-row">
+                    <strong>${z}</strong>
+                    <input type="checkbox" checked onchange="document.getElementById('card-${z}').classList.toggle('is-fail', !this.checked)">
+                </div>
+                <div class="fail-ui">
+                    <select id="sel-${z}">
+                        <option>Folie/Hout op vloer</option>
+                        <option>Stellingschade</option>
+                        <option>Nooduitgang geblokkeerd</option>
+                        <option>Verlichting defect</option>
+                        <option>Overig...</option>
+                    </select>
+                    <input type="text" id="txt-${z}" placeholder="Details...">
+                    <input type="file" accept="image/*" style="margin-top:10px;">
+                </div>
+            </div>`;
+        });
+    }
+
+    async function makePDF() {
+        const name = document.getElementById('ins-name').value;
+        if(!name) return alert("Naam invullen!");
+
+        const btn = document.getElementById('pdf-btn');
+        btn.innerText = "⏳ BEZIG...";
+        
+        // We bouwen de PDF-inhoud op in een tijdelijke variabele (geen verborgen HTML)
+        let rows = "";
+        zones.forEach(z => {
+            const fail = document.getElementById(`card-${z}`).classList.contains('is-fail');
+            rows += `<tr>
+                <td style="border:1px solid #000; padding:8px;">${z}</td>
+                <td style="border:1px solid #000; padding:8px; color:${fail?'red':'green'}">${fail?'AFWIJKING':'OK'}</td>
+                <td style="border:1px solid #000; padding:8px;">${fail ? document.getElementById(`sel-${z}`).value + " - " + document.getElementById(`txt-${z}`).value : '-'}</td>
+            </tr>`;
+        });
+
+        const template = `
+            <div style="padding:20px; font-family:sans-serif;">
+                <h1 style="text-align:center;">AWC Audit Rapport</h1>
+                <p><strong>Inspecteur:</strong> ${name}</p>
+                <p><strong>Datum:</strong> ${new Date().toLocaleString()}</p>
+                <table style="width:100%; border-collapse:collapse; margin-top:20px;">
+                    <thead><tr style="background:#eee;">
+                        <th style="border:1px solid #000; padding:8px;">Zone</th>
+                        <th style="border:1px solid #000; padding:8px;">Status</th>
+                        <th style="border:1px solid #000; padding:8px;">Details</th>
+                    </tr></thead>
+                    <tbody>${rows}</tbody>
+                </table>
+            </div>`;
+
+        const opt = {
+            margin: 10,
+            filename: `Audit_${name}.pdf`,
+            html2canvas: { scale: 2 },
+            jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+        };
+
+        html2pdf().from(template).set(opt).save().then(() => {
+            btn.innerText = "📄 DOWNLOAD PDF";
+        });
+    }
+
+    window.onload = build;
+</script>
+</body>
+</html>
