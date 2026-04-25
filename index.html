@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>AWC Audit V11 - Compleet</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.0.0/dist/signature_pad.umd.min.js"></script>
+    
+    <style>
+        :root { --bg: #0f172a; --card: #1e293b; --accent: #38bdf8; --success: #22c55e; --danger: #ef4444; --text: #f8fafc; }
+        body { font-family: sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 10px; padding-bottom: 240px; }
+        .container { max-width: 600px; margin: auto; }
+        .zone-card { background: var(--card); border-radius: 12px; margin-bottom: 12px; padding: 15px; border: 1px solid #334155; }
+        input[type="text"], select { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #334155; background: #0f172a; color: white; margin-top: 8px; box-sizing: border-box; }
+        .check-item { background: rgba(0,0,0,0.2); padding: 12px; border-radius: 8px; border-left: 5px solid var(--success); }
+        .check-item.is-fail { border-left-color: var(--danger); }
+        .check-row { display: flex; align-items: center; justify-content: space-between; }
+        input[type="checkbox"] { width: 35px; height: 35px; accent-color: var(--success); }
+        .fail-ui { display: none; margin-top: 10px; }
+        .is-fail .fail-ui { display: block; }
+        .photo-btn { background: #475569; margin-top: 10px; width: 100%; padding: 10px; border-radius: 8px; color: white; border: none; font-size: 0.8rem; }
+        .sig-container { background: white; border-radius: 8px; margin-top: 10px; }
+        canvas { width: 100%; height: 150px; touch-action: none; border-radius: 8px; }
+        
+        .footer { position: fixed; bottom: 0; left: 0; right: 0; background: #0f172a; padding: 15px; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; border-top: 2px solid var(--accent); z-index: 1000; }
+        button { padding: 18px; border: none; border-radius: 8px; font-weight: bold; color: white; cursor: pointer; }
+        .btn-pdf { background: var(--danger); grid-column: span 2; font-size: 1.1rem; }
+
+        /* PDF Render Area (Onzichtbaar op scherm) */
+        #print-area { position: absolute; left: -9999px; top: 0; width: 800px; background: white; color: black; padding: 40px; }
+        .print-table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        .print-table th, .print-table td { border: 1px solid black; padding: 10px; text-align: left; color: black; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="zone-card">
+        <h2 style="text-align:center; color:var(--accent); margin:0;">AWC Magazijn Audit</h2>
+        <input type="text" id="ins-name" placeholder="Naam Inspecteur...">
+    </div>
+
+    <div id="zones-list"></div>
+
+    <div class="zone-card">
+        <label style="color:white; font-weight:bold;">HANDTEKENING:</label>
+        <div class="sig-container"><canvas id="sig-canvas"></canvas></div>
+        <button onclick="sig.clear()" style="background:#475569; width:100%; margin-top:5px; padding:8px; border-radius:5px;">Wis handtekening</button>
+    </div>
+
+    <div class="footer">
+        <button style="background:#25D366" onclick="sendWA()">WhatsApp</button>
+        <button style="background:#0078d4" onclick="sendMail()">E-mail</button>
+        <button class="btn-pdf" id="pdf-btn" onclick="makeStablePDF()">📄 GENEREER PDF RAPPORT</button>
+    </div>
+</div>
+
+<div id="print-area">
+    <h1 style="text-align:center;">AMSTERDAM WAREHOUSE COMPANY</h1>
+    <h2 style="text-align:center; border-bottom: 2px solid #000;">AUDIT RAPPORTAGE</h2>
+    <p><strong>Inspecteur:</strong> <span id="p-name"></span></p>
+    <p><strong>Datum:</strong> <span id="p-date"></span></p>
+    <table class="print-table">
+        <thead>
+            <tr style="background:#eee;"><th>Zone</th><th>Status</th><th>Bevindingen</th></tr>
+        </thead>
+        <tbody id="p-body"></tbody>
+    </table>
+    <div style="margin-top:40px; text-align:right;">
+        <p>Handtekening:</p>
+        <img id="p-sig" style="width:200px; border-bottom:1px solid #000;">
+    </div>
+</div>
+
+<script>
+    const zones = ["Hal A", "Hal B", "Hal C", "Hal D", "Hal E", "Hal F", "Hal G", "Hal H", "Entresol", "Expeditie", "Toiletten"];
+    const options = ["Geen afwijking", "Folie/Hout op vloer", "Stellingschade", "Nooduitgang geblokkeerd", "Verlichting defect", "Overig..."];
+    let sig;
+
+    function init() {
+        const list = document.getElementById('zones-list');
+        zones.forEach(z => {
+            let menu = options.map(o => `<option value="${o}">${o}</option>`).join('');
+            list.innerHTML += `
+            <div class="zone-card" id="card-${z}">
+                <div class="check-item" id="item-${z}">
+                    <div class="check-row">
+                        <strong>${z}</strong>
+                        <input type="checkbox" checked onchange="document.getElementById('card-${z}').classList.toggle('is-fail', !this.checked)">
+                    </div>
+                    <div class="fail-ui">
+                        <select id="sel-${z}">${menu}</select>
+                        <input type="text" id="txt-${z}" placeholder="Locatie of extra info...">
+                        <input type="file" accept="image/*" class="photo-btn">
+                    </div>
+                </div>
+            </div>`;
+        });
+        const canvas = document.getElementById('sig-canvas');
+        sig = new SignaturePad(canvas);
+        canvas.width = canvas.offsetWidth; canvas.height = canvas.offsetHeight;
+    }
+
+    async function makeStablePDF() {
+        const name = document.getElementById('ins-name').value;
+        if(!name) return alert("Vul eerst je naam in!");
+        
+        const btn = document.getElementById('pdf-btn');
+        btn.innerText = "⏳ MOMENT... PDF WORDT GEMAAKT";
+        btn.disabled = true;
+
+        document.getElementById('p-name').innerText = name;
+        document.getElementById('p-date').innerText = new Date().toLocaleString('nl-NL');
+        if(!sig.isEmpty()) document.getElementById('p-sig').src = sig.toDataURL();
+        
+        const tbody = document.getElementById('p-body');
+        tbody.innerHTML = "";
+        zones.forEach(z => {
+            const fail = document.getElementById(`card-${z}`).classList.contains('is-fail');
+            tbody.innerHTML += `<tr>
+                <td><b>${z}</b></td>
+                <td style="color:${fail?'red':'green'}">${fail?'AFWIJKING':'OK'}</td>
+                <td>${fail ? document.getElementById(`sel-${z}`).value + " (" + document.getElementById(`txt-${z}`).value + ")" : '-'}</td>
+            </tr>`;
+        });
+
+        const area = document.getElementById('print-area');
+        html2canvas(area, { scale: 2, backgroundColor: "#ffffff" }).then(canvas => {
+            const imgData = canvas.toDataURL('image/jpeg', 0.9);
+            const { jsPDF } = window.jspdf;
+            const pdf = new jsPDF('p', 'mm', 'a4');
+            const pdfWidth = pdf.internal.pageSize.getWidth();
+            const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+            pdf.addImage(imgData, 'JPEG', 0, 0, pdfWidth, pdfHeight);
+            pdf.save(`Audit_${name}.pdf`);
+            btn.innerText = "📄 GENEREER PDF RAPPORT";
+            btn.disabled = false;
+        });
+    }
+
+    function sendWA() {
+        const name = document.getElementById('ins-name').value || "Willem";
+        let msg = `*AWC AUDIT*%0AInspecteur: ${name}%0A%0A`;
+        zones.forEach(z => {
+            const fail = document.getElementById(`card-${z}`).classList.contains('is-fail');
+            msg += fail ? `⚠️ *${z}*: AFWIJKING%0A` : `✅ ${z}: OK%0A`;
+        });
+        window.open(`https://api.whatsapp.com/send?text=${msg}`);
+    }
+
+    function sendMail() {
+        const name = document.getElementById('ins-name').value || "Willem";
+        window.location.href = `mailto:?subject=AWC Audit ${name}&body=De audit is voltooid. Zie bijgevoegd rapport (indien gedownload).`;
+    }
+
+    window.onload = init;
+</script>
+</body>
+</html>
