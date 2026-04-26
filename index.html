@@ -1,0 +1,946 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>AWC Warehouse Tools - PDF PRO v2</title>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/signature_pad@4.0.0/dist/signature_pad.umd.min.js"></script>
+
+<style>
+:root{
+  --bg:#020617;
+  --panel:#0f172a;
+  --card:#111827;
+  --line:#334155;
+  --accent:#ff6a00;
+  --ok:#22c55e;
+  --bad:#ef4444;
+  --action:#f59e0b;
+  --urgent:#7c3aed;
+  --blue:#2563eb;
+  --wa:#25D366;
+  --muted:#94a3b8;
+}
+*{box-sizing:border-box}
+html,body{max-width:100%;overflow-x:hidden}
+body{
+  margin:0;
+  padding:12px;
+  padding-bottom:245px;
+  font-family:Arial,Helvetica,sans-serif;
+  color:white;
+  background:
+    radial-gradient(circle at top left,rgba(255,106,0,.18),transparent 30%),
+    radial-gradient(circle at top right,rgba(37,99,235,.18),transparent 35%),
+    linear-gradient(180deg,#020617,#08111f 45%,#020617);
+}
+.app{width:100%;max-width:760px;margin:auto}
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:8px 4px 16px}
+.menu{font-size:2rem;line-height:1}
+.topbar h1{font-size:1.25rem;margin:0;text-align:center}
+.logo-small{
+  width:46px;height:46px;border:2px solid var(--accent);border-radius:14px;
+  display:flex;align-items:center;justify-content:center;font-weight:900;color:white;
+}
+.card{
+  background:linear-gradient(145deg,rgba(30,41,59,.92),rgba(15,23,42,.97));
+  border:1px solid rgba(148,163,184,.22);
+  border-radius:18px;
+  padding:14px;
+  margin-bottom:12px;
+  box-shadow:0 12px 26px rgba(0,0,0,.25);
+}
+.hero{text-align:center}
+.hero img{width:210px;max-width:90%;background:white;border-radius:14px;padding:9px;margin-bottom:10px}
+.hero h2{margin:0;font-size:1.3rem}
+.hero p{color:#cbd5e1;margin:7px 0 0;font-size:.9rem}
+.badges{display:flex;gap:7px;flex-wrap:wrap;justify-content:center;margin-top:12px}
+.badge{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);padding:6px 9px;border-radius:999px;color:#e2e8f0;font-size:.78rem}
+.info-grid{display:grid;grid-template-columns:1fr;gap:10px}
+@media(min-width:560px){.info-grid{grid-template-columns:1fr 1fr 1fr}}
+.info-box{background:rgba(2,6,23,.38);border:1px solid rgba(148,163,184,.18);border-radius:14px;padding:12px}
+.info-label{color:var(--muted);font-size:.82rem;margin-bottom:4px}
+select,input,textarea{
+  width:100%;min-width:0;padding:11px;border:1px solid rgba(148,163,184,.28);
+  border-radius:12px;color:white;background:#0f172a;font-size:1rem;
+}
+textarea{min-height:86px;resize:vertical}
+label{display:block;font-weight:700;margin:10px 0 6px}
+.extra-fields{display:none}
+.summary-title{font-size:1.12rem;font-weight:800;margin-bottom:12px}
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+@media(min-width:560px){.stats{grid-template-columns:repeat(4,1fr)}}
+.stat{border-radius:13px;padding:13px;text-align:center;border:1px solid rgba(255,255,255,.16)}
+.stat b{display:block;font-size:1.65rem;margin-top:6px}
+.stat-ok{background:linear-gradient(135deg,#14532d,#15803d)}
+.stat-bad{background:linear-gradient(135deg,#7f1d1d,#b91c1c)}
+.stat-action{background:linear-gradient(135deg,#78350f,#b45309)}
+.stat-urgent{background:linear-gradient(135deg,#4c1d95,#7c3aed)}
+.progress-label{display:flex;justify-content:space-between;margin:12px 0 6px}
+.progress{height:10px;background:#1e293b;border-radius:999px;overflow:hidden}
+.progress span{display:block;height:100%;width:0%;background:linear-gradient(90deg,#3b82f6,#60a5fa)}
+.section-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;gap:8px}
+.section-head h2{font-size:1.1rem;margin:0}
+.pill{background:#14532d;color:#dcfce7;border-radius:10px;padding:7px 12px;font-weight:800;white-space:nowrap}
+.checklist{display:flex;flex-direction:column;gap:8px}
+.check-row{
+  display:grid;grid-template-columns:1fr 56px 48px;gap:8px;align-items:center;
+  background:rgba(15,23,42,.75);border:1px solid rgba(148,163,184,.22);border-radius:12px;padding:8px;
+}
+.check-row.fail{border-color:rgba(239,68,68,.75);background:rgba(127,29,29,.18)}
+.check-row.urgent{border-color:rgba(124,58,237,.9);background:rgba(76,29,149,.22)}
+.check-title{font-size:.98rem;line-height:1.25}
+.ok-btn{height:46px;border:none;border-radius:10px;background:linear-gradient(135deg,#22c55e,#15803d);color:white;font-size:1.45rem;font-weight:900}
+.photo-btn{height:46px;border:1px solid rgba(148,163,184,.28);border-radius:10px;background:#0f172a;color:white;font-size:1.25rem}
+.fail-panel{grid-column:1/-1;display:none;border-top:1px solid rgba(148,163,184,.20);padding-top:10px}
+.check-row.fail .fail-panel{display:block}
+.photo-input{display:none}
+.preview-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:8px}
+.preview-grid img{width:100%;height:86px;object-fit:cover;border-radius:10px;border:1px solid var(--line)}
+.more-btn{width:100%;border:none;background:transparent;color:#60a5fa;padding:10px;font-weight:800;font-size:1rem}
+#signature{width:100%;height:165px;background:white;border-radius:14px;display:block;touch-action:none}
+.signature-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px}
+.small-btn{border:1px solid rgba(148,163,184,.28);background:#0f172a;color:white;border-radius:12px;padding:12px;font-weight:800}
+.blue-small{background:linear-gradient(135deg,#2563eb,#1d4ed8);border:none}
+.footer{
+  position:fixed;left:0;right:0;bottom:0;background:rgba(2,6,23,.98);backdrop-filter:blur(12px);
+  border-top:2px solid var(--accent);padding:12px;display:flex;flex-direction:column;gap:10px;z-index:9999;
+}
+.action-btn{
+  width:100%;max-width:760px;margin:0 auto;border:none;border-radius:12px;padding:16px;color:white;
+  font-size:1.08rem;font-weight:900;display:flex;align-items:center;justify-content:center;gap:10px;
+  box-shadow:0 10px 22px rgba(0,0,0,.30);
+}
+.btn-wa{background:linear-gradient(135deg,#25D366,#16a34a)}
+.btn-pdf{background:linear-gradient(135deg,#3b82f6,#1d4ed8)}
+.btn-mail{background:linear-gradient(135deg,#f97316,#dc2626)}
+button:disabled{opacity:.55}
+.hidden{display:none!important}
+
+/* PDF hidden from mobile layout */
+#pdf-wrap{display:none;position:fixed;left:-99999px;top:0}
+
+/* PDF PRO V2 */
+#pdf{
+  display:block!important;
+  background:#fff;
+  color:#111827;
+  width:794px;
+  max-width:794px;
+  min-height:1123px;
+  padding:0;
+  font-family:Arial,Helvetica,sans-serif;
+}
+.pdf-page{padding:26px 30px 20px}
+.pdf-top{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:18px;
+  padding-bottom:14px;
+  border-bottom:5px solid #ff6a00;
+}
+.pdf-top-left{display:flex;align-items:center;gap:16px}
+.pdf-top img{width:150px;background:white;object-fit:contain}
+.pdf-title h2{margin:0;font-size:24px;color:#111827}
+.pdf-title p{margin:4px 0 0;font-size:12px;color:#64748b}
+.pdf-report-no{
+  text-align:right;
+  font-size:11px;
+  color:#475569;
+  line-height:1.45;
+}
+.pdf-metrics{
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:8px;
+  margin:18px 0 14px;
+}
+.pdf-metrics div{
+  padding:12px 8px;
+  border-radius:10px;
+  color:white;
+  text-align:center;
+  font-size:12px;
+}
+.pdf-metrics b{font-size:20px}
+.pm1{background:#2563eb}.pm2{background:#16a34a}.pm3{background:#f97316}.pm4{background:#7c3aed}
+.pdf-info{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:6px 14px;
+  background:#f8fafc;
+  border:1px solid #cbd5e1;
+  border-radius:10px;
+  padding:10px;
+  font-size:12px;
+  margin-bottom:12px;
+}
+.pdf-info p{margin:2px 0}
+.pdf-section-title{
+  margin:16px 0 8px;
+  padding-left:9px;
+  border-left:5px solid #ff6a00;
+  font-weight:800;
+  font-size:14px;
+  color:#111827;
+}
+.pdf-table{
+  width:100%;
+  border-collapse:separate;
+  border-spacing:0;
+  border:1px solid #cbd5e1;
+  border-radius:10px;
+  overflow:hidden;
+  margin-top:8px;
+}
+.pdf-table th{
+  background:#111827;
+  color:white;
+  padding:8px;
+  font-size:10px;
+  text-align:left;
+}
+.pdf-table td{
+  border-top:1px solid #cbd5e1;
+  padding:7px;
+  font-size:10px;
+  vertical-align:top;
+}
+.pdf-table tr{page-break-inside:avoid}
+.status-pill{
+  display:inline-block;
+  padding:3px 7px;
+  border-radius:999px;
+  color:white;
+  font-weight:700;
+  font-size:9px;
+}
+.ok-pill{background:#16a34a}
+.action-pill{background:#f97316}
+.urgent-pill{background:#7c3aed}
+.pdf-photo{width:78px;height:58px;object-fit:cover;border-radius:5px;border:1px solid #cbd5e1}
+.pdf-grid{display:grid;grid-template-columns:1fr 1fr;gap:4px}
+.pdf-summary{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:12px;
+  margin-top:14px;
+  page-break-inside:avoid;
+}
+.pdf-summary-box{
+  border:1px solid #cbd5e1;
+  border-radius:10px;
+  padding:10px;
+  background:#f8fafc;
+  font-size:12px;
+}
+.pdf-summary-box h3{margin:0 0 8px;font-size:13px}
+.pdf-summary-box ul{margin:0;padding-left:18px}
+.pdf-summary-box li{margin:4px 0}
+.pdf-signature-row{
+  display:grid;
+  grid-template-columns:1fr 280px;
+  gap:18px;
+  align-items:end;
+  margin-top:22px;
+  page-break-inside:avoid;
+}
+.pdf-sign-left{
+  font-size:12px;
+  color:#334155;
+}
+.pdf-sign-box{
+  text-align:center;
+}
+#p-sign{
+  width:240px;
+  height:110px;
+  object-fit:contain;
+  background:white;
+  display:block;
+  margin:0 auto 5px;
+}
+.pdf-sign-line{
+  border-top:2px solid #111827;
+  padding-top:6px;
+  font-size:11px;
+  color:#111827;
+}
+.pdf-footer{
+  margin-top:18px;
+  padding-top:8px;
+  border-top:2px solid #ff6a00;
+  color:#64748b;
+  font-size:10px;
+  display:flex;
+  justify-content:space-between;
+  gap:10px;
+}
+</style>
+</head>
+
+<body>
+<div class="app">
+
+  <div class="topbar">
+    <div class="menu">☰</div>
+    <h1>AWC Warehouse Tools</h1>
+    <div class="logo-small">AWC</div>
+  </div>
+
+  <div class="card hero">
+    <img src="logo.png" alt="Amsterdam Warehouse Co logo">
+    <h2>Complete Next Level UI</h2>
+    <p>PDF PRO v2 · Geen zoom · Complete modules · WhatsApp</p>
+    <div class="badges">
+      <span class="badge">📍 Locaties</span>
+      <span class="badge">📋 10 modules</span>
+      <span class="badge">📸 Multi foto</span>
+      <span class="badge">💬 WhatsApp PRO</span>
+      <span class="badge">📄 PDF PRO v2</span>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="info-grid">
+      <div class="info-box">
+        <div class="info-label">📍 Locatie</div>
+        <select id="location" onchange="updateScore()">
+          <option>Hal A</option><option>Hal B</option><option>Hal C</option><option>Hal D</option>
+          <option>Hal E</option><option>Hal F</option><option>Hal G</option><option>Hal H</option>
+          <option>Expeditie 1</option><option>Expeditie 2</option><option>Expeditie 3</option>
+          <option>Entresol</option><option>Toiletten</option><option>Buitenterrein</option>
+        </select>
+      </div>
+
+      <div class="info-box">
+        <div class="info-label">👤 Gebruiker</div>
+        <select id="user">
+          <option>Willem</option>
+          <option>Teamleider</option>
+          <option>Medewerker 1</option>
+          <option>Medewerker 2</option>
+          <option>Expeditie</option>
+          <option>BHV</option>
+          <option value="custom">Andere gebruiker</option>
+        </select>
+        <input id="customUser" placeholder="Naam gebruiker" style="display:none;margin-top:8px;">
+      </div>
+
+      <div class="info-box">
+        <div class="info-label">🕒 Dienst</div>
+        <select id="shift">
+          <option>Ochtend</option><option>Middag</option><option>Avond</option><option>Nacht</option>
+        </select>
+      </div>
+    </div>
+
+    <label>Module</label>
+    <select id="module" onchange="renderList()">
+      <option value="daily">Dagelijkse checklist</option>
+      <option value="reachtruck">Reachtruck / heftruck</option>
+      <option value="loading">Laad / los controle</option>
+      <option value="cleaning">Schoonmaak</option>
+      <option value="inbound">Inkomende goederen</option>
+      <option value="outbound">Uitgaande goederen</option>
+      <option value="return">Retouren</option>
+      <option value="bhv">BHV inspectie</option>
+      <option value="technical">Technische dienst</option>
+      <option value="leader">Teamleider inspectie</option>
+    </select>
+
+    <div id="assetFields" class="extra-fields">
+      <label>Machine / asset / dock</label>
+      <input id="asset" placeholder="Bijv. Reachtruck 03, Dock 2, stelling B4">
+    </div>
+
+    <div id="orderFields" class="extra-fields">
+      <label>Klant / referentie</label>
+      <input id="customer" placeholder="Klantnaam of referentie">
+      <label>Order / retournummer</label>
+      <input id="orderNo" placeholder="Ordernummer of retournummer">
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="summary-title">Overzicht</div>
+    <div class="stats">
+      <div class="stat stat-ok">✓ OK<b id="s-ok">0</b></div>
+      <div class="stat stat-bad">✕ Niet OK<b id="s-bad">0</b></div>
+      <div class="stat stat-action">⚠ Actie<b id="s-action">0</b></div>
+      <div class="stat stat-urgent">🚨 SPOED<b id="s-urgent">0</b></div>
+    </div>
+    <div class="progress-label"><span>Totaal controles</span><b id="s-total">0 / 0</b></div>
+    <div class="progress"><span id="s-progress"></span></div>
+  </div>
+
+  <div class="card">
+    <label>Algemene opmerkingen</label>
+    <textarea id="notes" placeholder="Extra opmerkingen..."></textarea>
+  </div>
+
+  <div class="card">
+    <div class="section-head">
+      <h2 id="section-title">Checklist</h2>
+      <span class="pill" id="section-pill">0 / 0 OK</span>
+    </div>
+    <div class="checklist" id="list"></div>
+    <button class="more-btn" onclick="toggleAll()" id="moreBtn">Bekijk alle controles⌄</button>
+  </div>
+
+  <div class="card">
+    <label>Handtekening</label>
+    <canvas id="signature"></canvas>
+    <div class="signature-actions">
+      <button class="small-btn" onclick="undoSig()">↩ Wissen</button>
+      <button class="small-btn blue-small" onclick="clearSig()">🗑 Leegmaken</button>
+    </div>
+  </div>
+
+</div>
+
+<div id="pdf-wrap">
+  <div id="pdf">
+    <div class="pdf-page">
+      <div class="pdf-top">
+        <div class="pdf-top-left">
+          <img src="logo.png" alt="AWC logo">
+          <div class="pdf-title">
+            <h2 id="p-title">AWC Inspectie Rapport</h2>
+            <p>Automatisch gegenereerd via AWC Warehouse Tools</p>
+          </div>
+        </div>
+        <div class="pdf-report-no">
+          <b>Rapport</b><br>
+          <span id="p-report-no"></span><br>
+          <span id="p-date"></span>
+        </div>
+      </div>
+
+      <div class="pdf-metrics">
+        <div class="pm1"><b id="p-score">0%</b><br>Score</div>
+        <div class="pm2"><b id="p-ok">0</b><br>OK</div>
+        <div class="pm3"><b id="p-actions">0</b><br>Acties</div>
+        <div class="pm4"><b id="p-urgent">0</b><br>SPOED</div>
+      </div>
+
+      <div class="pdf-info">
+        <p><b>Locatie:</b> <span id="p-location"></span></p>
+        <p><b>Gebruiker:</b> <span id="p-user"></span></p>
+        <p><b>Dienst:</b> <span id="p-shift"></span></p>
+        <p><b>Module:</b> <span id="p-module"></span></p>
+        <p id="p-extra-a"></p>
+        <p id="p-extra-b"></p>
+      </div>
+
+      <div class="pdf-section-title">Controlepunten</div>
+
+      <table class="pdf-table">
+        <thead>
+          <tr><th>Punt</th><th>Status</th><th>Details</th><th>Prio</th><th>Foto</th></tr>
+        </thead>
+        <tbody id="p-body"></tbody>
+      </table>
+
+      <div class="pdf-summary">
+        <div class="pdf-summary-box">
+          <h3>Samenvatting</h3>
+          <ul>
+            <li>Totaal controles: <b id="p-total-summary"></b></li>
+            <li>OK controles: <b id="p-ok-summary"></b></li>
+            <li>Actiepunten: <b id="p-action-summary"></b></li>
+            <li>SPOED meldingen: <b id="p-urgent-summary"></b></li>
+          </ul>
+        </div>
+        <div class="pdf-summary-box">
+          <h3>Opmerkingen</h3>
+          <p id="p-notes"></p>
+        </div>
+      </div>
+
+      <div class="pdf-signature-row">
+        <div class="pdf-sign-left">
+          <b>Opgesteld door:</b><br>
+          <span id="p-prepared-by"></span><br><br>
+          <b>Controle afgerond op:</b><br>
+          <span id="p-finished-date"></span>
+        </div>
+        <div class="pdf-sign-box">
+          <img id="p-sign">
+          <div class="pdf-sign-line">Handtekening inspecteur</div>
+        </div>
+      </div>
+
+      <div class="pdf-footer">
+        <span>Amsterdam Warehouse Co · The place to go</span>
+        <span>AWC Warehouse Tools · Automatisch gegenereerd rapport</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="footer">
+  <button class="action-btn btn-wa" onclick="sendWhatsApp()">💬 WhatsApp versturen</button>
+  <button class="action-btn btn-pdf" onclick="downloadPDF()">📄 Download PDF</button>
+  <button class="action-btn btn-mail" onclick="pdfMail()">✉️ PDF + E-mail verzenden</button>
+</div>
+
+<script>
+const MAIL_TO = "willem@amsterdamwarehouse.com";
+
+const moduleInfo = {
+  daily:{asset:false,order:false},
+  reachtruck:{asset:true,order:false},
+  loading:{asset:true,order:false},
+  cleaning:{asset:false,order:false},
+  inbound:{asset:false,order:true},
+  outbound:{asset:false,order:true},
+  return:{asset:false,order:true},
+  bhv:{asset:false,order:false},
+  technical:{asset:true,order:false},
+  leader:{asset:false,order:false}
+};
+
+const moduleData = {
+  daily:[
+    "Looppaden vrij","Docks schoon en veilig","Nooduitgangen vrij","Afval verwijderd",
+    "Pallets correct gestapeld","Vloer schoon en droog","Verlichting in orde","Geen schade aan stellingen"
+  ],
+  reachtruck:[
+    "Accu opgeladen","Geen lekkage zichtbaar","Banden / wielen in orde","Remmen werken",
+    "Hefmast in orde","Vorken onbeschadigd","Claxon werkt","Verlichting werkt",
+    "Veiligheidsgordel aanwezig","Geen zichtbare schade"
+  ],
+  loading:[
+    "Trailer stabiel","Dock veilig","Wielblokken geplaatst","Lading gezekerd",
+    "Geen zichtbare schade","Papieren compleet","Dockdeur veilig","Werkgebied vrij"
+  ],
+  cleaning:[
+    "Vloer schoon","Afval verwijderd","Werkplek netjes","Geen obstakels",
+    "Stof / vuil verwijderd","Afvalbakken geleegd","Toiletten schoon indien van toepassing",
+    "Kantine netjes indien van toepassing"
+  ],
+  inbound:[
+    "Aantal klopt","Geen transportschade","Labels correct","Product komt overeen met order",
+    "Verpakking intact","Documenten aanwezig","Foto bij afwijking toegevoegd"
+  ],
+  outbound:[
+    "Juiste order","Correct verpakt","Labels juist","Geen schade",
+    "Documenten compleet","Pallet stabiel","Lading gereed voor transport"
+  ],
+  return:[
+    "Retour ontvangen","Verpakking gecontroleerd","Product gecontroleerd","Schade zichtbaar",
+    "Aantal gecontroleerd","Label / ordernummer aanwezig","Foto bewijs toegevoegd",
+    "Retour klaar voor verwerking"
+  ],
+  bhv:[
+    "Nooduitgangen vrij","Vluchtwegen vrij","Brandblussers bereikbaar","EHBO materiaal aanwezig",
+    "Evacuatie verzamelplaats vrij","Noodverlichting zichtbaar","Brandmelders vrij",
+    "Aanwezigenregistratie mogelijk"
+  ],
+  technical:[
+    "Storing omschreven","Locatie duidelijk","Foto toegevoegd","Prioriteit bepaald",
+    "Veiligheid beoordeeld","Tijdelijke oplossing nodig","Status open / opvolging nodig"
+  ],
+  leader:[
+    "Werkplek netjes","Team werkt veilig","Productiviteit op orde","Instructies duidelijk",
+    "Materialen aanwezig","Knelpunten gemeld","Afwijkingen opgevolgd","Communicatie op orde"
+  ]
+};
+
+const issues = [
+  "Rommel / obstakel","Blokkade","Vuil / afval","Schade","Onveilige situatie",
+  "Lekkage","Defect","Niet gedaan","Ontbreekt","Verkeerd artikel","Overig"
+];
+
+let sigPad;
+let showAll = false;
+
+function currentUser(){
+  const user = document.getElementById("user").value;
+  if(user === "custom"){
+    return document.getElementById("customUser").value || "Onbekend";
+  }
+  return user;
+}
+
+document.addEventListener("change", function(e){
+  if(e.target && e.target.id === "user"){
+    document.getElementById("customUser").style.display = e.target.value === "custom" ? "block" : "none";
+  }
+});
+
+function renderList(){
+  const key = document.getElementById("module").value;
+  const list = document.getElementById("list");
+  const moduleName = document.getElementById("module").selectedOptions[0].text;
+  const info = moduleInfo[key];
+
+  document.getElementById("assetFields").style.display = info.asset ? "block" : "none";
+  document.getElementById("orderFields").style.display = info.order ? "block" : "none";
+
+  document.getElementById("section-title").innerText = moduleName;
+  list.innerHTML = "";
+
+  moduleData[key].forEach((item,i)=>{
+    const extraClass = (!showAll && i > 3) ? "hidden extra-row" : "extra-row";
+    list.insertAdjacentHTML("beforeend",`
+      <div class="check-row ${extraClass}" id="card_${i}">
+        <div class="check-title">${item}</div>
+        <button class="ok-btn" onclick="toggleFail(${i})" id="ok_${i}">✓</button>
+        <button class="photo-btn" onclick="document.getElementById('photo_${i}').click()">📷</button>
+
+        <input class="photo-input" type="file" multiple accept="image/*" id="photo_${i}" onchange="preview(${i})">
+
+        <div class="fail-panel">
+          <label>Afwijking</label>
+          <select id="issue_${i}">
+            ${issues.map(x=>`<option>${x}</option>`).join("")}
+          </select>
+
+          <label>Details</label>
+          <textarea id="detail_${i}" placeholder="Details / locatie / actie..."></textarea>
+
+          <label>Prioriteit</label>
+          <select id="prio_${i}" onchange="updateScore()">
+            <option>LAAG</option>
+            <option>MEDIUM</option>
+            <option>SPOED</option>
+          </select>
+
+          <div class="preview-grid" id="prev_${i}"></div>
+        </div>
+      </div>
+    `);
+  });
+
+  document.getElementById("moreBtn").style.display = moduleData[key].length > 4 ? "block" : "none";
+  document.getElementById("moreBtn").innerText = showAll ? "Toon minder controles⌃" : "Bekijk alle controles⌄";
+  updateScore();
+}
+
+function toggleAll(){
+  showAll = !showAll;
+  renderList();
+}
+
+function toggleFail(i){
+  const card = document.getElementById("card_"+i);
+  const fail = !card.classList.contains("fail");
+
+  card.classList.toggle("fail",fail);
+
+  const btn = document.getElementById("ok_"+i);
+  btn.innerText = fail ? "✕" : "✓";
+  btn.style.background = fail
+    ? "linear-gradient(135deg,#ef4444,#991b1b)"
+    : "linear-gradient(135deg,#22c55e,#15803d)";
+
+  updateScore();
+}
+
+function preview(i){
+  const box = document.getElementById("prev_"+i);
+  box.innerHTML = "";
+  const files = document.getElementById("photo_"+i).files;
+
+  Array.from(files).slice(0,6).forEach(file=>{
+    const reader = new FileReader();
+    reader.onload = e => box.insertAdjacentHTML("beforeend",`<img src="${e.target.result}">`);
+    reader.readAsDataURL(file);
+  });
+}
+
+function getReport(){
+  const key = document.getElementById("module").value;
+  let ok = 0;
+  let actions = [];
+  let urgent = [];
+
+  moduleData[key].forEach((item,i)=>{
+    const fail = document.getElementById("card_"+i).classList.contains("fail");
+
+    if(!fail){
+      ok++;
+      return;
+    }
+
+    const obj = {
+      item,
+      issue:document.getElementById("issue_"+i).value,
+      detail:document.getElementById("detail_"+i).value,
+      prio:document.getElementById("prio_"+i).value,
+      i
+    };
+
+    actions.push(obj);
+    if(obj.prio === "SPOED") urgent.push(obj);
+  });
+
+  return {
+    ok,
+    actions,
+    urgent,
+    total:moduleData[key].length,
+    score:Math.round(ok / moduleData[key].length * 100)
+  };
+}
+
+function updateScore(){
+  const r = getReport();
+
+  document.getElementById("s-ok").innerText = r.ok;
+  document.getElementById("s-bad").innerText = r.actions.length;
+  document.getElementById("s-action").innerText = r.actions.filter(a=>a.prio !== "SPOED").length;
+  document.getElementById("s-urgent").innerText = r.urgent.length;
+  document.getElementById("s-total").innerText = r.ok + " / " + r.total;
+  document.getElementById("s-progress").style.width = r.score + "%";
+  document.getElementById("section-pill").innerText = r.ok + " / " + r.total + " OK";
+
+  r.actions.forEach(a=>{
+    document.getElementById("card_"+a.i).classList.toggle("urgent",a.prio === "SPOED");
+  });
+}
+
+function buildWhatsAppMessage(){
+  const NL = String.fromCharCode(10);
+  const r = getReport();
+  const key = document.getElementById("module").value;
+  const info = moduleInfo[key];
+
+  let lines = [];
+
+  lines.push(r.urgent.length ? "🚨 *AWC SPOED MELDING*" : "📋 *AWC WAREHOUSE RAPPORT*");
+  lines.push("━━━━━━━━━━━━━━");
+  lines.push("🏢 *Locatie:* " + document.getElementById("location").value);
+  lines.push("🧰 *Module:* " + document.getElementById("module").selectedOptions[0].text);
+  lines.push("👤 *Gebruiker:* " + currentUser());
+  lines.push("🕒 *Dienst:* " + document.getElementById("shift").value);
+  lines.push("📅 *Datum:* " + new Date().toLocaleString("nl-NL"));
+
+  if(info.asset){
+    lines.push("🏷️ *Asset:* " + (document.getElementById("asset").value || "-"));
+  }
+
+  if(info.order){
+    lines.push("📦 *Klant/ref:* " + (document.getElementById("customer").value || "-"));
+    lines.push("🔢 *Order/ref:* " + (document.getElementById("orderNo").value || "-"));
+  }
+
+  lines.push("━━━━━━━━━━━━━━");
+  lines.push("");
+  lines.push("📊 *SCORE:* " + r.score + "%");
+  lines.push("✅ OK: " + r.ok + "/" + r.total);
+  lines.push("⚠️ Acties: " + r.actions.length);
+  lines.push("🚨 SPOED: " + r.urgent.length);
+
+  if(r.actions.length){
+    lines.push("");
+    lines.push("━━━━━━━━━━━━━━");
+    lines.push("*ACTIEPUNTEN*");
+    lines.push("━━━━━━━━━━━━━━");
+
+    r.actions.forEach((a,i)=>{
+      lines.push((i+1) + ". " + (a.prio==="SPOED" ? "🚨" : "⚠️") + " *" + a.item + "*");
+      lines.push("   • Reden: " + a.issue);
+      if(a.detail) lines.push("   • Details: " + a.detail);
+      lines.push("   • Prio: " + a.prio);
+      lines.push("");
+    });
+  }else{
+    lines.push("");
+    lines.push("✅ *Geen actiepunten gevonden.*");
+  }
+
+  const note = document.getElementById("notes").value;
+  if(note){
+    lines.push("");
+    lines.push("📝 *OPMERKING*");
+    lines.push(note);
+  }
+
+  lines.push("");
+  lines.push("━━━━━━━━━━━━━━");
+  lines.push("📎 PDF is apart gegenereerd vanuit de AWC app.");
+
+  return lines.join(NL);
+}
+
+function sendWhatsApp(){
+  window.open("https://api.whatsapp.com/send?text="+encodeURIComponent(buildWhatsAppMessage()),"_blank");
+}
+
+function fileToData(file){
+  return new Promise(resolve=>{
+    if(!file) return resolve("");
+    const reader = new FileReader();
+    reader.onload = e => resolve(e.target.result);
+    reader.readAsDataURL(file);
+  });
+}
+
+function makeReportNumber(){
+  const d = new Date();
+  const y = d.getFullYear();
+  const m = String(d.getMonth()+1).padStart(2,"0");
+  const day = String(d.getDate()).padStart(2,"0");
+  const h = String(d.getHours()).padStart(2,"0");
+  const min = String(d.getMinutes()).padStart(2,"0");
+  return "AWC-" + y + m + day + "-" + h + min;
+}
+
+async function preparePDF(){
+  const r = getReport();
+  const key = document.getElementById("module").value;
+  const info = moduleInfo[key];
+  const dateString = new Date().toLocaleString("nl-NL");
+
+  document.getElementById("pdf-wrap").style.display = "block";
+
+  document.getElementById("p-title").innerText = "AWC " + document.getElementById("module").selectedOptions[0].text;
+  document.getElementById("p-report-no").innerText = makeReportNumber();
+  document.getElementById("p-date").innerText = dateString;
+  document.getElementById("p-score").innerText = r.score + "%";
+  document.getElementById("p-ok").innerText = r.ok + "/" + r.total;
+  document.getElementById("p-actions").innerText = r.actions.length;
+  document.getElementById("p-urgent").innerText = r.urgent.length;
+  document.getElementById("p-location").innerText = document.getElementById("location").value;
+  document.getElementById("p-user").innerText = currentUser();
+  document.getElementById("p-shift").innerText = document.getElementById("shift").value;
+  document.getElementById("p-module").innerText = document.getElementById("module").selectedOptions[0].text;
+  document.getElementById("p-notes").innerText = document.getElementById("notes").value || "-";
+  document.getElementById("p-sign").src = sigPad.toDataURL("image/png");
+  document.getElementById("p-total-summary").innerText = r.total;
+  document.getElementById("p-ok-summary").innerText = r.ok;
+  document.getElementById("p-action-summary").innerText = r.actions.length;
+  document.getElementById("p-urgent-summary").innerText = r.urgent.length;
+  document.getElementById("p-prepared-by").innerText = currentUser();
+  document.getElementById("p-finished-date").innerText = dateString;
+
+  document.getElementById("p-extra-a").innerHTML = "";
+  document.getElementById("p-extra-b").innerHTML = "";
+
+  if(info.asset){
+    document.getElementById("p-extra-a").innerHTML = "<b>Asset:</b> " + (document.getElementById("asset").value || "-");
+  }
+
+  if(info.order){
+    document.getElementById("p-extra-a").innerHTML = "<b>Klant/ref:</b> " + (document.getElementById("customer").value || "-");
+    document.getElementById("p-extra-b").innerHTML = "<b>Order/ref:</b> " + (document.getElementById("orderNo").value || "-");
+  }
+
+  const body = document.getElementById("p-body");
+  body.innerHTML = "";
+
+  for(let i=0;i<moduleData[key].length;i++){
+    const fail = document.getElementById("card_"+i).classList.contains("fail");
+    const files = document.getElementById("photo_"+i).files;
+    const prio = fail ? document.getElementById("prio_"+i).value : "-";
+
+    let photos = "-";
+    if(fail && files.length){
+      let arr = [];
+      for(const file of Array.from(files).slice(0,4)){
+        arr.push(`<img class="pdf-photo" src="${await fileToData(file)}">`);
+      }
+      photos = `<div class="pdf-grid">${arr.join("")}</div>`;
+    }
+
+    let status = `<span class="status-pill ok-pill">OK</span>`;
+    if(fail && prio === "SPOED") status = `<span class="status-pill urgent-pill">SPOED</span>`;
+    else if(fail) status = `<span class="status-pill action-pill">ACTIE</span>`;
+
+    body.insertAdjacentHTML("beforeend",`
+      <tr>
+        <td><b>${moduleData[key][i]}</b></td>
+        <td>${status}</td>
+        <td>${fail ? document.getElementById("issue_"+i).value + "<br>" + document.getElementById("detail_"+i).value : "In orde"}</td>
+        <td>${prio}</td>
+        <td>${photos}</td>
+      </tr>
+    `);
+  }
+
+  await new Promise(resolve=>setTimeout(resolve,900));
+}
+
+async function downloadPDF(){
+  if(sigPad.isEmpty()){
+    alert("Handtekening verplicht");
+    return;
+  }
+
+  const btns = document.querySelectorAll("button");
+  btns.forEach(b=>b.disabled=true);
+
+  try{
+    await preparePDF();
+
+    const opt = {
+      margin:0,
+      filename:"AWC_rapport_PRO_v2.pdf",
+      image:{type:"jpeg",quality:0.98},
+      html2canvas:{
+        scale:2,
+        useCORS:true,
+        allowTaint:true,
+        backgroundColor:"#ffffff",
+        scrollX:0,
+        scrollY:0,
+        windowWidth:794
+      },
+      jsPDF:{unit:"mm",format:"a4",orientation:"portrait"},
+      pagebreak:{mode:["css","legacy"],avoid:".pdf-summary,.pdf-signature-row,.pdf-footer"}
+    };
+
+    await html2pdf().set(opt).from(document.getElementById("pdf")).save();
+
+  }catch(err){
+    alert("Fout bij PDF maken: " + err.message);
+  }finally{
+    document.getElementById("pdf-wrap").style.display = "none";
+    btns.forEach(b=>b.disabled=false);
+  }
+}
+
+async function pdfMail(){
+  await downloadPDF();
+  window.location.href = "mailto:" + MAIL_TO + "?subject=AWC Rapport&body=" + encodeURIComponent(buildWhatsAppMessage().replaceAll("*",""));
+}
+
+function clearSig(){
+  sigPad.clear();
+}
+
+function undoSig(){
+  const data = sigPad.toData();
+  if(data.length){
+    data.pop();
+    sigPad.fromData(data);
+  }
+}
+
+function resizeSignature(){
+  const canvas = document.getElementById("signature");
+  const ratio = Math.max(window.devicePixelRatio || 1, 1);
+  canvas.width = canvas.offsetWidth * ratio;
+  canvas.height = canvas.offsetHeight * ratio;
+  canvas.getContext("2d").scale(ratio,ratio);
+  if(sigPad) sigPad.clear();
+}
+
+window.onload = () => {
+  renderList();
+  const canvas = document.getElementById("signature");
+  sigPad = new SignaturePad(canvas,{backgroundColor:"white"});
+  resizeSignature();
+};
+
+window.onresize = resizeSignature;
+</script>
+
+</body>
+</html>
