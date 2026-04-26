@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AWC Warehouse Tools UI PRO</title>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/signature_pad@4.0.0/dist/signature_pad.umd.min.js"></script>
+
+<style>
+:root{
+  --bg:#020617;
+  --card:#111827;
+  --card2:#1e293b;
+  --accent:#ff6a00;
+  --ok:#22c55e;
+  --bad:#ef4444;
+  --urgent:#f97316;
+  --blue:#2563eb;
+  --wa:#25D366;
+  --muted:#94a3b8;
+}
+*{box-sizing:border-box}
+body{
+  margin:0;
+  padding:14px;
+  padding-bottom:285px;
+  font-family:Arial,Helvetica,sans-serif;
+  color:white;
+  background:
+    radial-gradient(circle at top left,rgba(255,106,0,.18),transparent 30%),
+    radial-gradient(circle at top right,rgba(37,99,235,.20),transparent 35%),
+    linear-gradient(180deg,#020617,#0f172a 45%,#020617);
+}
+.container{max-width:860px;margin:auto}
+.header{
+  background:linear-gradient(145deg,rgba(30,41,59,.98),rgba(2,6,23,.96));
+  border:1px solid rgba(148,163,184,.28);
+  border-radius:24px;
+  padding:20px;
+  text-align:center;
+  box-shadow:0 18px 40px rgba(0,0,0,.35);
+  margin-bottom:14px;
+}
+.logo{
+  width:220px;
+  max-width:90%;
+  background:white;
+  border-radius:16px;
+  padding:10px;
+  display:block;
+  margin:0 auto 12px;
+}
+h1{margin:0;font-size:1.45rem}
+.sub{color:#cbd5e1;font-size:.92rem;margin:8px 0 0}
+.badges{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-top:12px}
+.badge{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);padding:7px 10px;border-radius:999px;color:#e2e8f0;font-size:.82rem}
+.card{
+  background:linear-gradient(180deg,rgba(30,41,59,.98),rgba(15,23,42,.98));
+  border:1px solid rgba(148,163,184,.24);
+  border-radius:20px;
+  padding:16px;
+  margin-bottom:14px;
+  box-shadow:0 12px 28px rgba(0,0,0,.25);
+}
+label{display:block;margin-top:10px;font-weight:bold;color:#e2e8f0}
+input,select,textarea{
+  width:100%;
+  padding:13px;
+  margin-top:7px;
+  border-radius:13px;
+  border:1px solid rgba(148,163,184,.28);
+  background:#0f172a;
+  color:white;
+  font-size:1rem;
+}
+textarea{min-height:82px;resize:vertical}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.check{
+  background:rgba(2,6,23,.5);
+  border-left:7px solid var(--ok);
+  border-radius:16px;
+  padding:13px;
+}
+.check.fail{border-left-color:var(--bad)}
+.check.urgent{border-left-color:var(--urgent);box-shadow:0 0 0 1px rgba(249,115,22,.6),0 10px 24px rgba(249,115,22,.15)}
+.row{display:flex;justify-content:space-between;align-items:center;gap:12px}
+.checkbox{width:38px;height:38px;accent-color:var(--ok)}
+.failbox{display:none;margin-top:12px;border-top:1px solid #475569;padding-top:10px}
+.fail .failbox{display:block}
+.preview-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:8px}
+.preview-grid img{width:100%;height:90px;object-fit:cover;border-radius:10px;border:1px solid #475569}
+#signature{width:100%;height:205px;background:white;border-radius:14px;display:block;touch-action:none}
+.score{
+  background:linear-gradient(135deg,#052e16,#064e3b);
+  border:1px solid #22c55e;
+  color:#dcfce7;
+  border-radius:16px;
+  padding:14px;
+  margin-bottom:14px;
+  font-size:1rem;
+}
+.alert{
+  display:none;
+  background:linear-gradient(135deg,#7f1d1d,#9a3412);
+  border:1px solid #f97316;
+  border-radius:16px;
+  padding:14px;
+  margin-bottom:14px;
+  font-weight:bold;
+}
+.footer{
+  position:fixed;
+  bottom:0;
+  left:0;
+  right:0;
+  background:rgba(2,6,23,.97);
+  backdrop-filter:blur(12px);
+  padding:12px;
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+  border-top:2px solid var(--accent);
+  z-index:9999;
+}
+button{
+  width:100%;
+  padding:18px;
+  border-radius:14px;
+  font-size:1.08rem;
+  font-weight:bold;
+  border:none;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  gap:10px;
+  color:white;
+  box-shadow:0 10px 20px rgba(0,0,0,.28);
+}
+button:disabled{opacity:.55}
+.btn-wa{background:linear-gradient(135deg,#25D366,#16a34a);color:white}
+.btn-pdf{background:linear-gradient(135deg,#3b82f6,#1d4ed8)}
+.btn-mail{background:linear-gradient(135deg,#f97316,#dc2626)}
+.btn-clear{background:linear-gradient(135deg,#64748b,#475569);margin-top:8px;padding:12px;font-size:.95rem}
+.btn-ok{background:linear-gradient(135deg,#22c55e,#15803d);margin-top:10px;padding:13px;font-size:.95rem}
+#pdf-wrap{display:block;background:#0f172a;padding-top:10px}
+#pdf{
+  display:block!important;
+  background:white;
+  color:#0f172a;
+  padding:24px;
+  margin-top:18px;
+  border-radius:12px;
+  width:794px;
+  max-width:794px;
+  min-height:1123px;
+}
+.pdf-head{display:flex;align-items:center;gap:16px;border-bottom:5px solid #ff6a00;padding-bottom:13px}
+.pdf-head img{width:160px;background:white}
+.metric{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:16px 0}
+.metric div{padding:11px;border-radius:11px;color:white;text-align:center}.m1{background:#2563eb}.m2{background:#16a34a}.m3{background:#f97316}.m4{background:#dc2626}
+table{width:100%;border-collapse:collapse;margin-top:10px}
+th,td{border:1px solid #cbd5e1;padding:7px;font-size:10px;vertical-align:top}
+th{background:#0f172a;color:white}
+.pdf-photo{width:80px;height:60px;object-fit:cover;border-radius:5px}.pdf-grid{display:grid;grid-template-columns:1fr 1fr;gap:4px}
+#p-sign{width:230px;height:105px;object-fit:contain;border-bottom:1px solid #000;background:white}
+@media(max-width:650px){
+  .grid{grid-template-columns:1fr}
+  .preview-grid{grid-template-columns:repeat(2,1fr)}
+  .metric{grid-template-columns:1fr 1fr}
+  #pdf{width:794px;max-width:794px}
+}
+</style>
+</head>
+<body>
+<div class="container">
+
+<div class="header">
+  <img src="logo.png" class="logo" alt="AWC logo">
+  <h1>AWC Warehouse Tools UI PRO</h1>
+  <p class="sub">Mobiel design · WhatsApp PRO · PDF fix · Foto’s · Handtekening</p>
+  <div class="badges">
+    <span class="badge">📍 Locaties</span>
+    <span class="badge">📸 Foto’s</span>
+    <span class="badge">✍️ Sign</span>
+    <span class="badge">📄 PDF</span>
+    <span class="badge">💬 WhatsApp</span>
+  </div>
+</div>
+
+<div id="alert" class="alert">🚨 SPOED gedetecteerd</div>
+<div id="score" class="score"></div>
+
+<div class="card">
+  <div class="grid">
+    <div>
+      <label>Gebruiker</label>
+      <select id="user">
+        <option>Willem</option>
+        <option>Teamleider</option>
+        <option>Medewerker 1</option>
+        <option>Medewerker 2</option>
+        <option>Expeditie</option>
+        <option>BHV</option>
+      </select>
+    </div>
+    <div>
+      <label>Dienst</label>
+      <select id="shift">
+        <option>Ochtend</option>
+        <option>Middag</option>
+        <option>Avond</option>
+        <option>Nacht</option>
+      </select>
+    </div>
+  </div>
+
+  <label>Locatie</label>
+  <select id="location" onchange="updateScore()">
+    <option>Hal A</option><option>Hal B</option><option>Hal C</option><option>Hal D</option>
+    <option>Hal E</option><option>Hal F</option><option>Hal G</option><option>Hal H</option>
+    <option>Expeditie 1</option><option>Expeditie 2</option><option>Expeditie 3</option>
+    <option>Entresol</option><option>Toiletten</option><option>Buitenterrein</option>
+  </select>
+
+  <label>Module</label>
+  <select id="module" onchange="renderList()">
+    <option value="daily">Dagelijkse checklist</option>
+    <option value="reachtruck">Reachtruck / heftruck</option>
+    <option value="loading">Laad / los controle</option>
+    <option value="cleaning">Schoonmaak</option>
+    <option value="inbound">Inkomende goederen</option>
+    <option value="outbound">Uitgaande goederen</option>
+    <option value="return">Retouren</option>
+    <option value="bhv">BHV inspectie</option>
+    <option value="technical">Technische dienst</option>
+    <option value="leader">Teamleider inspectie</option>
+  </select>
+</div>
+
+<div id="list"></div>
+
+<div class="card">
+  <label>Algemene opmerkingen</label>
+  <textarea id="notes" placeholder="Extra opmerkingen..."></textarea>
+  <button class="btn-ok" onclick="markAllOk()">✅ Alles OK</button>
+</div>
+
+<div class="card">
+  <label>Handtekening</label>
+  <canvas id="signature"></canvas>
+  <button class="btn-clear" onclick="clearSig()">🗑️ Wis handtekening</button>
+</div>
+
+<div id="pdf-wrap">
+  <div id="pdf">
+    <div class="pdf-head">
+      <img src="logo.png" alt="AWC logo">
+      <div>
+        <h2 id="p-title">AWC Rapport</h2>
+        <p id="p-date"></p>
+      </div>
+    </div>
+
+    <div class="metric">
+      <div class="m1"><b id="p-score">0%</b><br>Score</div>
+      <div class="m2"><b id="p-ok">0</b><br>OK</div>
+      <div class="m3"><b id="p-actions">0</b><br>Acties</div>
+      <div class="m4"><b id="p-urgent">0</b><br>SPOED</div>
+    </div>
+
+    <p><b>Locatie:</b> <span id="p-location"></span> | <b>Gebruiker:</b> <span id="p-user"></span> | <b>Dienst:</b> <span id="p-shift"></span></p>
+
+    <table>
+      <thead><tr><th>Punt</th><th>Status</th><th>Details</th><th>Prio</th><th>Foto</th></tr></thead>
+      <tbody id="p-body"></tbody>
+    </table>
+
+    <p><b>Opmerkingen:</b></p>
+    <p id="p-notes"></p>
+
+    <p style="text-align:right"><b>Handtekening:</b><br><img id="p-sign"></p>
+  </div>
+</div>
+
+</div>
+
+<div class="footer">
+  <button class="btn-wa" onclick="sendWhatsApp()">💬 WhatsApp</button>
+  <button class="btn-pdf" onclick="downloadPDF()">📄 Download PDF</button>
+  <button class="btn-mail" onclick="pdfMail()">✉️ PDF + E-mail</button>
+</div>
+
+<script>
+const MAIL_TO = "willem@amsterdamwarehouse.com";
+
+const moduleData = {
+  daily:["Looppaden vrij","Docks schoon en veilig","Nooduitgangen vrij","Afval verwijderd","Pallets correct gestapeld","Vloer schoon en droog","Verlichting in orde","Geen schade aan stellingen"],
+  reachtruck:["Accu opgeladen","Geen lekkage zichtbaar","Banden / wielen in orde","Remmen werken","Hefmast in orde","Vorken onbeschadigd","Claxon werkt","Verlichting werkt","Veiligheidsgordel aanwezig","Geen zichtbare schade"],
+  loading:["Trailer stabiel","Dock veilig","Wielblokken geplaatst","Lading gezekerd","Geen zichtbare schade","Papieren compleet","Dockdeur veilig","Werkgebied vrij"],
+  cleaning:["Vloer schoon","Afval verwijderd","Werkplek netjes","Geen obstakels","Stof / vuil verwijderd","Afvalbakken geleegd","Toiletten schoon indien van toepassing"],
+  inbound:["Aantal klopt","Geen transportschade","Labels correct","Product komt overeen met order","Verpakking intact","Documenten aanwezig","Foto bij afwijking toegevoegd"],
+  outbound:["Juiste order","Correct verpakt","Labels juist","Geen schade","Documenten compleet","Pallet stabiel","Lading gereed"],
+  return:["Retour ontvangen","Verpakking gecontroleerd","Product gecontroleerd","Schade zichtbaar","Aantal gecontroleerd","Label / ordernummer aanwezig","Foto bewijs toegevoegd"],
+  bhv:["Nooduitgangen vrij","Vluchtwegen vrij","Brandblussers bereikbaar","EHBO materiaal aanwezig","Verzamelplaats vrij","Noodverlichting zichtbaar","Brandmelders vrij"],
+  technical:["Storing omschreven","Locatie duidelijk","Foto toegevoegd","Prioriteit bepaald","Veiligheid beoordeeld","Opvolging nodig"],
+  leader:["Werkplek netjes","Team werkt veilig","Productiviteit op orde","Instructies duidelijk","Materialen aanwezig","Knelpunten gemeld","Communicatie op orde"]
+};
+const issues = ["Rommel / obstakel","Blokkade","Vuil / afval","Schade","Onveilige situatie","Lekkage","Defect","Overig"];
+let sigPad;
+
+function renderList(){
+  const list = document.getElementById("list");
+  const key = document.getElementById("module").value;
+  list.innerHTML = "";
+  moduleData[key].forEach((item,i)=>{
+    list.insertAdjacentHTML("beforeend",`
+      <div class="card">
+        <div class="check" id="card_${i}">
+          <div class="row">
+            <div><b>${item}</b><br><small style="color:#94a3b8">Aan = OK / Uit = actiepunt</small></div>
+            <input class="checkbox" type="checkbox" checked onchange="toggleFail(${i},this.checked)">
+          </div>
+          <div class="failbox">
+            <label>Afwijking</label>
+            <select id="issue_${i}">${issues.map(x=>`<option>${x}</option>`).join("")}</select>
+            <label>Details</label>
+            <textarea id="detail_${i}" placeholder="Details / locatie / actie..."></textarea>
+            <label>Prioriteit</label>
+            <select id="prio_${i}" onchange="updateScore()">
+              <option>LAAG</option><option>MEDIUM</option><option>SPOED</option>
+            </select>
+            <label>Foto's</label>
+            <input type="file" multiple accept="image/*" id="photo_${i}" onchange="preview(${i})">
+            <div class="preview-grid" id="prev_${i}"></div>
+          </div>
+        </div>
+      </div>
+    `);
+  });
+  updateScore();
+}
+function toggleFail(i,checked){document.getElementById("card_"+i).classList.toggle("fail",!checked);updateScore();}
+function preview(i){
+  const box=document.getElementById("prev_"+i); box.innerHTML="";
+  Array.from(document.getElementById("photo_"+i).files).slice(0,6).forEach(file=>{
+    const reader=new FileReader();
+    reader.onload=e=>box.insertAdjacentHTML("beforeend",`<img src="${e.target.result}">`);
+    reader.readAsDataURL(file);
+  });
+}
+function getReport(){
+  const key=document.getElementById("module").value;
+  let ok=0,actions=[],urgent=[];
+  moduleData[key].forEach((item,i)=>{
+    const fail=document.getElementById("card_"+i).classList.contains("fail");
+    if(!fail){ok++;return;}
+    const obj={item,issue:document.getElementById("issue_"+i).value,detail:document.getElementById("detail_"+i).value,prio:document.getElementById("prio_"+i).value,i};
+    actions.push(obj); if(obj.prio==="SPOED")urgent.push(obj);
+  });
+  return {ok,actions,urgent,total:moduleData[key].length,score:Math.round(ok/moduleData[key].length*100)};
+}
+function updateScore(){
+  const r=getReport();
+  document.getElementById("score").innerHTML=`📊 Score <b>${r.score}%</b> · ✅ ${r.ok}/${r.total} · ⚠️ ${r.actions.length} · 🚨 ${r.urgent.length}`;
+  document.getElementById("alert").style.display=r.urgent.length?"block":"none";
+  r.actions.forEach(a=>document.getElementById("card_"+a.i).classList.toggle("urgent",a.prio==="SPOED"));
+}
+function markAllOk(){
+  const key=document.getElementById("module").value;
+  moduleData[key].forEach((_,i)=>{
+    const cb=document.querySelector(`#card_${i} .checkbox`);
+    cb.checked=true; toggleFail(i,true);
+  });
+}
+function buildWhatsAppMessage(){
+  const NL=String.fromCharCode(10);
+  const r=getReport();
+  let lines=[];
+  lines.push(r.urgent.length?"🚨 *AWC SPOED MELDING*":"📋 *AWC WAREHOUSE RAPPORT*");
+  lines.push("━━━━━━━━━━━━━━");
+  lines.push("🏢 *Locatie:* "+document.getElementById("location").value);
+  lines.push("🧰 *Module:* "+document.getElementById("module").selectedOptions[0].text);
+  lines.push("👤 *Gebruiker:* "+document.getElementById("user").value);
+  lines.push("🕒 *Dienst:* "+document.getElementById("shift").value);
+  lines.push("📅 *Datum:* "+new Date().toLocaleString("nl-NL"));
+  lines.push("━━━━━━━━━━━━━━");
+  lines.push("");
+  lines.push("📊 *SCORE:* "+r.score+"%");
+  lines.push("✅ OK: "+r.ok+"/"+r.total);
+  lines.push("⚠️ Acties: "+r.actions.length);
+  lines.push("🚨 SPOED: "+r.urgent.length);
+  if(r.actions.length){
+    lines.push("");lines.push("━━━━━━━━━━━━━━");lines.push("*ACTIEPUNTEN*");lines.push("━━━━━━━━━━━━━━");
+    r.actions.forEach((a,i)=>{
+      lines.push((i+1)+". "+(a.prio==="SPOED"?"🚨":"⚠️")+" *"+a.item+"*");
+      lines.push("   • Reden: "+a.issue);
+      if(a.detail)lines.push("   • Details: "+a.detail);
+      lines.push("   • Prio: "+a.prio); lines.push("");
+    });
+  }else{lines.push("");lines.push("✅ *Geen actiepunten gevonden.*");}
+  const note=document.getElementById("notes").value;
+  if(note){lines.push("");lines.push("📝 *OPMERKING*");lines.push(note);}
+  lines.push("");lines.push("━━━━━━━━━━━━━━");lines.push("📎 PDF is apart gegenereerd vanuit de AWC app.");
+  return lines.join(NL);
+}
+function sendWhatsApp(){window.open("https://api.whatsapp.com/send?text="+encodeURIComponent(buildWhatsAppMessage()),"_blank");}
+function fileToData(file){
+  return new Promise(resolve=>{
+    if(!file)return resolve("");
+    const reader=new FileReader();
+    reader.onload=e=>resolve(e.target.result);
+    reader.readAsDataURL(file);
+  });
+}
+async function preparePDF(){
+  const r=getReport(); const key=document.getElementById("module").value;
+  document.getElementById("p-title").innerText="AWC "+document.getElementById("module").selectedOptions[0].text;
+  document.getElementById("p-date").innerText=new Date().toLocaleString("nl-NL");
+  document.getElementById("p-score").innerText=r.score+"%";
+  document.getElementById("p-ok").innerText=r.ok+"/"+r.total;
+  document.getElementById("p-actions").innerText=r.actions.length;
+  document.getElementById("p-urgent").innerText=r.urgent.length;
+  document.getElementById("p-location").innerText=document.getElementById("location").value;
+  document.getElementById("p-user").innerText=document.getElementById("user").value;
+  document.getElementById("p-shift").innerText=document.getElementById("shift").value;
+  document.getElementById("p-notes").innerText=document.getElementById("notes").value||"-";
+  document.getElementById("p-sign").src=sigPad.toDataURL("image/png");
+  const body=document.getElementById("p-body"); body.innerHTML="";
+  for(let i=0;i<moduleData[key].length;i++){
+    const fail=document.getElementById("card_"+i).classList.contains("fail");
+    const files=document.getElementById("photo_"+i).files;
+    let photos="-";
+    if(fail&&files.length){
+      let arr=[];
+      for(const file of Array.from(files).slice(0,4)){const data=await fileToData(file);arr.push(`<img class="pdf-photo" src="${data}">`);}
+      photos=`<div class="pdf-grid">${arr.join("")}</div>`;
+    }
+    body.insertAdjacentHTML("beforeend",`
+      <tr><td><b>${moduleData[key][i]}</b></td><td>${fail?"ACTIE":"OK"}</td><td>${fail?document.getElementById("issue_"+i).value+"<br>"+document.getElementById("detail_"+i).value:"In orde"}</td><td>${fail?document.getElementById("prio_"+i).value:"-"}</td><td>${photos}</td></tr>
+    `);
+  }
+  await new Promise(resolve=>setTimeout(resolve,900));
+}
+async function downloadPDF(){
+  if(sigPad.isEmpty())return alert("Handtekening verplicht");
+  const btns=document.querySelectorAll("button");btns.forEach(b=>b.disabled=true);
+  try{
+    await preparePDF();
+    const opt={margin:8,filename:"AWC_rapport.pdf",image:{type:"jpeg",quality:0.98},html2canvas:{scale:2,useCORS:true,allowTaint:true,backgroundColor:"#ffffff",scrollX:0,scrollY:0,windowWidth:794},jsPDF:{unit:"mm",format:"a4",orientation:"portrait"},pagebreak:{mode:["css","legacy"]}};
+    await html2pdf().set(opt).from(document.getElementById("pdf")).save();
+  }catch(err){alert("Fout bij PDF maken: "+err.message);}
+  finally{btns.forEach(b=>b.disabled=false);}
+}
+async function pdfMail(){
+  await downloadPDF();
+  window.location.href="mailto:"+MAIL_TO+"?subject=AWC Rapport&body="+encodeURIComponent(buildWhatsAppMessage().replaceAll("*",""));
+}
+function clearSig(){sigPad.clear();}
+function resizeSignature(){
+  const canvas=document.getElementById("signature");
+  const ratio=Math.max(window.devicePixelRatio||1,1);
+  canvas.width=canvas.offsetWidth*ratio; canvas.height=canvas.offsetHeight*ratio;
+  canvas.getContext("2d").scale(ratio,ratio);
+  if(sigPad)sigPad.clear();
+}
+window.onload=()=>{renderList();const canvas=document.getElementById("signature");sigPad=new SignaturePad(canvas,{backgroundColor:"white"});resizeSignature();};
+window.onresize=resizeSignature;
+</script>
+
+</body>
+</html>
